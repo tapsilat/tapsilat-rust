@@ -1,0 +1,16 @@
+[package]
+name = "tapsilat"
+version = "2025.9.28"
+edition = "2021"
+
+authors = ["Tapsilat <gitub@tapsilat.dev>"]
+license = "MIT"
+description = "The Tapsilat SDK for Rust"
+readme = "README.md"
+homepage = "https://tapsilat.com"
+repository = "https://github.com/tapsilat/tapsilat-rust"
+keywords = ["payment", "fintech","tapsilat"]
+categories = ["api-bindings"]
+
+[lib]
+name = "tapsilat"
