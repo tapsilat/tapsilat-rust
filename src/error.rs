@@ -5,10 +5,7 @@ pub enum TapsilatError {
     Http(ureq::Error),
     Serialization(std::io::Error),
     InvalidResponse(String),
-    ApiError {
-        status_code: u16,
-        message: String,
-    },
+    ApiError { status_code: u16, message: String },
     ConfigError(String),
 }
 
@@ -18,7 +15,10 @@ impl fmt::Display for TapsilatError {
             TapsilatError::Http(err) => write!(f, "HTTP error: {}", err),
             TapsilatError::Serialization(err) => write!(f, "Serialization error: {}", err),
             TapsilatError::InvalidResponse(msg) => write!(f, "Invalid response: {}", msg),
-            TapsilatError::ApiError { status_code, message } => {
+            TapsilatError::ApiError {
+                status_code,
+                message,
+            } => {
                 write!(f, "API error ({}): {}", status_code, message)
             }
             TapsilatError::ConfigError(msg) => write!(f, "Configuration error: {}", msg),

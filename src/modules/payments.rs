@@ -1,6 +1,9 @@
 use crate::config::Config;
 use crate::error::Result;
-use crate::types::{ApiResponse, CreatePaymentRequest, Payment, PaymentResponse, PaginatedResponse, PaginationParams};
+use crate::types::{
+    ApiResponse, CreatePaymentRequest, PaginatedResponse, PaginationParams, Payment,
+    PaymentResponse,
+};
 
 pub struct PaymentModule {
     config: Config,

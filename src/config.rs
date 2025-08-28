@@ -28,11 +28,15 @@ impl Config {
 
     pub fn validate(&self) -> Result<()> {
         if self.api_key.is_empty() {
-            return Err(TapsilatError::ConfigError("API key cannot be empty".to_string()));
+            return Err(TapsilatError::ConfigError(
+                "API key cannot be empty".to_string(),
+            ));
         }
-        
+
         if self.base_url.is_empty() {
-            return Err(TapsilatError::ConfigError("Base URL cannot be empty".to_string()));
+            return Err(TapsilatError::ConfigError(
+                "Base URL cannot be empty".to_string(),
+            ));
         }
 
         Ok(())
