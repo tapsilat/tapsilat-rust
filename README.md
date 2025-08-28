@@ -47,3 +47,19 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Development Workflow
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Run tests: `cargo test`
+5. Submit a Pull Request
+
+### Automated CI/CD
+This project uses GitHub Actions for:
+- **Continuous Integration**: Automated testing on multiple platforms
+- **Automated Publishing**: Release to crates.io when tags are pushed
+- **Documentation**: Auto-generated docs deployed to GitHub Pages
+- **Release Management**: Automated version bumping and changelog generation
+
+See [`.github/README.md`](.github/README.md) for detailed workflow documentation.

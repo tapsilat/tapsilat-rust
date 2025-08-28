@@ -1,0 +1,91 @@
+name: Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_type:
+        description: 'Version bump type'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
+        - custom
+      custom_version:
+        description: 'Custom version (only used if version_type is custom)'
+        required: false
+        type: string
+
+jobs:
+  release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+        token: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      
+    - name: Install cargo-edit
+      run: cargo install cargo-edit
+      
+    - name: Configure Git
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+    - name: Bump version
+      id: version
+      run: |
+        if [ "${{ github.event.inputs.version_type }}" = "custom" ]; then
+          NEW_VERSION="${{ github.event.inputs.custom_version }}"
+          cargo set-version "$NEW_VERSION"
+        else
+          cargo set-version --bump ${{ github.event.inputs.version_type }}
+        fi
+        
+        NEW_VERSION=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[0].version')
+        echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
+        echo "New version: $NEW_VERSION"
+        
+    - name: Update Cargo.lock
+      run: cargo check
+      
+    - name: Commit version bump
+      run: |
+        git add Cargo.toml Cargo.lock
+        git commit -m "chore: bump version to v${{ steps.version.outputs.new_version }}"
+        
+    - name: Create and push tag
+      run: |
+        git tag "v${{ steps.version.outputs.new_version }}"
+        git push origin main
+        git push origin "v${{ steps.version.outputs.new_version }}"
+        
+    - name: Generate changelog
+      id: changelog
+      run: |
+        # Simple changelog generation - you might want to use a more sophisticated tool
+        echo "## Changes" > CHANGELOG.md
+        git log --pretty=format:"- %s" $(git describe --tags --abbrev=0 HEAD^)..HEAD >> CHANGELOG.md
+        echo "" >> CHANGELOG.md
+        
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.version.outputs.new_version }}
+        name: Release v${{ steps.version.outputs.new_version }}
+        body_path: CHANGELOG.md
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
