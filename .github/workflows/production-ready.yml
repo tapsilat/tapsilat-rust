@@ -1,0 +1,68 @@
+name: Production Ready Check
+
+on:
+  workflow_dispatch:
+    inputs:
+      strict_mode:
+        description: 'Run in strict mode (fail on any error)'
+        required: false
+        default: true
+        type: boolean
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  production-check:
+    name: Production Ready Validation
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        rust: [stable, beta]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: ${{ matrix.rust }}
+        
+    - name: Cache cargo registry
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          target
+        key: ${{ runner.os }}-${{ matrix.rust }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+        
+    - name: Check formatting (strict)
+      run: cargo fmt -- --check
+      if: matrix.rust == 'stable' && matrix.os == 'ubuntu-latest'
+      
+    - name: Run clippy (strict)
+      run: cargo clippy --lib --all-features -- -D warnings
+      if: matrix.rust == 'stable'
+      
+    - name: Check library compilation (must pass)
+      run: cargo check --lib --all-features
+      
+    - name: Run library tests (must pass)
+      run: cargo test --lib --all-features
+      
+    - name: Test all examples compile (must pass)
+      run: |
+        cargo check --example basic_usage
+        cargo check --example advanced_usage
+        cargo check --example sdk_demo
+        
+    - name: Build documentation (must pass)
+      run: cargo doc --lib --no-deps --all-features
+      if: matrix.rust == 'stable' && matrix.os == 'ubuntu-latest'
+      
+    - name: Verify package can be built
+      run: cargo package --allow-dirty
+      if: matrix.rust == 'stable' && matrix.os == 'ubuntu-latest'
