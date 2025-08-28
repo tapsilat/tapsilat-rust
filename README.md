@@ -1,42 +1,49 @@
-# Tapsilat Rust SDK Examples
+# Tapsilat Rust SDK
 
-This directory contains examples demonstrating how to use the Tapsilat Rust SDK.
+The Tapsilat SDK for Rust - A simple payment and fintech library.
 
-## Available Examples
+## Installation
 
-### 1. Basic Usage (`basic_usage.rs`)
-Demonstrates the fundamental usage of the `hello()` function:
-- Simple function calls
-- Formatting with the result
-- Multiple calls in loops
+Add this to your `Cargo.toml`:
 
-**Run with:**
-```bash
-cargo run --example basic_usage
+```toml
+[dependencies]
+tapsilat = "2025.9.28"
 ```
 
-### 2. Advanced Usage (`advanced_usage.rs`)
-Shows more sophisticated usage patterns:
-- Using the function in structs and implementations
-- Working with collections
-- Conditional usage patterns
+## Usage
 
-**Run with:**
+```rust
+use tapsilat::hello;
+
+fn main() {
+    let greeting = hello();
+    println!("{}", greeting); // Prints: hello
+}
+```
+
+## Examples
+
+This package includes several examples demonstrating different usage patterns:
+
 ```bash
+# Run basic example
+cargo run --example basic_usage
+
+# Run advanced example  
 cargo run --example advanced_usage
 ```
 
-## Running All Examples
+## API Documentation
 
-You can run all examples with:
-```bash
-# List all examples
-cargo run --example
+### `hello() -> String`
 
-# Run specific example
-cargo run --example <example_name>
-```
+Returns a simple greeting message.
 
-## Example Output
+## License
 
-The examples will output various greeting messages and demonstrate different ways to integrate the Tapsilat SDK into your Rust applications.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a Pull Request.
