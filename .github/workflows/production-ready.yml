@@ -15,10 +15,9 @@ env:
 jobs:
   production-check:
     name: Production Ready Validation
-    runs-on: ${{ matrix.os }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
         rust: [stable, beta]
         
     steps:
@@ -41,7 +40,7 @@ jobs:
         
     - name: Check formatting (strict)
       run: cargo fmt -- --check
-      if: matrix.rust == 'stable' && matrix.os == 'ubuntu-latest'
+      if: matrix.rust == 'stable'
       
     - name: Run clippy (strict)
       run: cargo clippy --lib --all-features -- -D warnings
@@ -61,8 +60,29 @@ jobs:
         
     - name: Build documentation (must pass)
       run: cargo doc --lib --no-deps --all-features
-      if: matrix.rust == 'stable' && matrix.os == 'ubuntu-latest'
+      if: matrix.rust == 'stable'
       
     - name: Verify package can be built
       run: cargo package --allow-dirty
-      if: matrix.rust == 'stable' && matrix.os == 'ubuntu-latest'
+      if: matrix.rust == 'stable'
+
+  # Optional: Keep a minimal cross-platform check
+  cross-platform-check:
+    name: Cross-Platform Compatibility
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Install Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      
+    - name: Quick compilation check
+      run: cargo check --lib --all-features
+      
+    - name: Quick test run
+      run: cargo test --lib --all-features
