@@ -10,6 +10,9 @@ pub use error::{Result, TapsilatError};
 pub use types::*;
 pub use modules::{PaymentModule, OrderModule, InstallmentModule, WebhookModule, Validators};
 
+// Re-export installment types for convenience
+pub use modules::installments::{InstallmentPlan, Installment, InstallmentStatus, CreateInstallmentPlanRequest, UpdateInstallmentRequest, RefundInstallmentRequest};
+
 #[cfg(test)]
 mod tests {
     use super::*;
