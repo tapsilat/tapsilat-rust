@@ -50,9 +50,6 @@ impl WebhookModule {
 
     /// Verifies webhook signature using HMAC-SHA256
     fn verify_signature(payload: &str, signature: &str, secret: &str) -> Result<bool> {
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
-
         // Remove 'sha256=' prefix if present
         let signature = signature.strip_prefix("sha256=").unwrap_or(signature);
 
@@ -115,7 +112,7 @@ impl WebhookModule {
     }
 
     /// Parses ISO 8601 timestamp to Unix timestamp
-    fn parse_iso8601_timestamp(timestamp: &str) -> Result<u64> {
+    fn parse_iso8601_timestamp(_timestamp: &str) -> Result<u64> {
         // This is a simplified parser
         // In production, use a proper datetime parsing library like chrono
         

@@ -42,4 +42,10 @@ impl From<std::io::Error> for TapsilatError {
     }
 }
 
+impl From<serde_json::Error> for TapsilatError {
+    fn from(err: serde_json::Error) -> Self {
+        TapsilatError::InvalidResponse(format!("JSON parsing error: {}", err))
+    }
+}
+
 pub type Result<T> = std::result::Result<T, TapsilatError>;

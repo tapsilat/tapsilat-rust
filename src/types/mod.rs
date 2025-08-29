@@ -6,9 +6,6 @@ pub mod webhook;
 
 pub use common::*;
 pub use payment::*;
-<<<<<<< Updated upstream
-=======
 pub use order::*;
 pub use buyer::*;
 pub use webhook::*;
->>>>>>> Stashed changes

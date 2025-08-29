@@ -75,7 +75,7 @@ impl InstallmentModule {
         self.validate_create_request(&request)?;
 
         let response = self.client.make_request("POST", "installments/plans", Some(&request))?;
-        let api_response: ApiResponse<InstallmentPlan> = response.into_json()?;
+        let api_response: ApiResponse<InstallmentPlan> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(plan) => Ok(plan),
@@ -95,7 +95,7 @@ impl InstallmentModule {
 
         let endpoint = format!("installments/plans/{}", plan_id);
         let response = self.client.make_request::<()>("GET", &endpoint, None)?;
-        let api_response: ApiResponse<InstallmentPlan> = response.into_json()?;
+        let api_response: ApiResponse<InstallmentPlan> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(plan) => Ok(plan),
@@ -115,7 +115,7 @@ impl InstallmentModule {
 
         let endpoint = format!("orders/{}/installments/plans", order_id);
         let response = self.client.make_request::<()>("GET", &endpoint, None)?;
-        let api_response: ApiResponse<Vec<InstallmentPlan>> = response.into_json()?;
+        let api_response: ApiResponse<Vec<InstallmentPlan>> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(plans) => Ok(plans),
@@ -140,7 +140,7 @@ impl InstallmentModule {
 
         let endpoint = format!("installments/{}", installment_id);
         let response = self.client.make_request("PUT", &endpoint, Some(&request))?;
-        let api_response: ApiResponse<Installment> = response.into_json()?;
+        let api_response: ApiResponse<Installment> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(installment) => Ok(installment),
@@ -160,7 +160,7 @@ impl InstallmentModule {
 
         let endpoint = format!("installments/plans/{}/cancel", plan_id);
         let response = self.client.make_request::<()>("POST", &endpoint, None)?;
-        let api_response: ApiResponse<InstallmentPlan> = response.into_json()?;
+        let api_response: ApiResponse<InstallmentPlan> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(plan) => Ok(plan),
@@ -185,7 +185,7 @@ impl InstallmentModule {
 
         let endpoint = format!("installments/{}/refund", installment_id);
         let response = self.client.make_request("POST", &endpoint, Some(&request))?;
-        let api_response: ApiResponse<Installment> = response.into_json()?;
+        let api_response: ApiResponse<Installment> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(installment) => Ok(installment),
@@ -218,7 +218,7 @@ impl InstallmentModule {
         }
 
         let response = self.client.make_request::<()>("GET", &endpoint, None)?;
-        let api_response: ApiResponse<PaginatedResponse<InstallmentPlan>> = response.into_json()?;
+        let api_response: ApiResponse<PaginatedResponse<InstallmentPlan>> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(paginated_plans) => Ok(paginated_plans),

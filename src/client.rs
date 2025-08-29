@@ -1,11 +1,6 @@
 use crate::config::Config;
 use crate::error::{Result, TapsilatError};
-<<<<<<< Updated upstream
-use crate::modules::payments::PaymentModule;
-=======
 use crate::modules::{PaymentModule, OrderModule, InstallmentModule, WebhookModule};
-use std::time::Duration;
->>>>>>> Stashed changes
 
 #[derive(Clone)]
 pub struct TapsilatClient {
@@ -30,8 +25,6 @@ impl TapsilatClient {
         Self::new(config)
     }
 
-<<<<<<< Updated upstream
-=======
     /// Access to payment operations
     pub fn payments(&self) -> PaymentModule {
         PaymentModule::new(std::sync::Arc::new(self.clone()))
@@ -52,17 +45,12 @@ impl TapsilatClient {
         &WebhookModule
     }
 
->>>>>>> Stashed changes
     pub(crate) fn make_request<T>(
         &self,
         method: &str,
         endpoint: &str,
         body: Option<&T>,
-<<<<<<< Updated upstream
     ) -> Result<serde_json::Value>
-=======
-    ) -> Result<ureq::Response>
->>>>>>> Stashed changes
     where
         T: serde::Serialize,
     {
@@ -72,79 +60,63 @@ impl TapsilatClient {
             endpoint.trim_start_matches('/')
         );
 
-<<<<<<< Updated upstream
         let mut response = match method.to_uppercase().as_str() {
-            "GET" => self
-                .http_client
-                .get(&url)
-                .header("Authorization", &format!("Bearer {}", self.config.api_key))
-                .header("Content-Type", "application/json")
-                .header(
-                    "User-Agent",
-                    &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
-                )
-                .call()?,
-            "POST" => match body {
-                Some(data) => self
-                    .http_client
-                    .post(&url)
+            "GET" => {
+                self.http_client
+                    .get(&url)
                     .header("Authorization", &format!("Bearer {}", self.config.api_key))
                     .header("Content-Type", "application/json")
-                    .header(
-                        "User-Agent",
-                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
-                    )
-                    .send_json(data)?,
-                None => self
-                    .http_client
-                    .post(&url)
+                    .header("User-Agent", &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")))
+                    .call()?
+            }
+            "POST" => {
+                match body {
+                    Some(data) => {
+                        self.http_client
+                            .post(&url)
+                            .header("Authorization", &format!("Bearer {}", self.config.api_key))
+                            .header("Content-Type", "application/json")
+                            .header("User-Agent", &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")))
+                            .send_json(data)?
+                    }
+                    None => {
+                        self.http_client
+                            .post(&url)
+                            .header("Authorization", &format!("Bearer {}", self.config.api_key))
+                            .header("Content-Type", "application/json")
+                            .header("User-Agent", &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")))
+                            .send("")?
+                    }
+                }
+            }
+            "PUT" => {
+                match body {
+                    Some(data) => {
+                        self.http_client
+                            .put(&url)
+                            .header("Authorization", &format!("Bearer {}", self.config.api_key))
+                            .header("Content-Type", "application/json")
+                            .header("User-Agent", &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")))
+                            .send_json(data)?
+                    }
+                    None => {
+                        self.http_client
+                            .put(&url)
+                            .header("Authorization", &format!("Bearer {}", self.config.api_key))
+                            .header("Content-Type", "application/json")
+                            .header("User-Agent", &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")))
+                            .send("")?
+                    }
+                }
+            }
+            "DELETE" => {
+                self.http_client
+                    .delete(&url)
                     .header("Authorization", &format!("Bearer {}", self.config.api_key))
                     .header("Content-Type", "application/json")
-                    .header(
-                        "User-Agent",
-                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
-                    )
-                    .send("")?,
-            },
-            "PUT" => match body {
-                Some(data) => self
-                    .http_client
-                    .put(&url)
-                    .header("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .header("Content-Type", "application/json")
-                    .header(
-                        "User-Agent",
-                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
-                    )
-                    .send_json(data)?,
-                None => self
-                    .http_client
-                    .put(&url)
-                    .header("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .header("Content-Type", "application/json")
-                    .header(
-                        "User-Agent",
-                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
-                    )
-                    .send("")?,
-            },
-            "DELETE" => self
-                .http_client
-                .delete(&url)
-                .header("Authorization", &format!("Bearer {}", self.config.api_key))
-                .header("Content-Type", "application/json")
-                .header(
-                    "User-Agent",
-                    &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
-                )
-                .call()?,
-=======
-        let mut request = match method.to_uppercase().as_str() {
-            "GET" => self.http_client.get(&url),
-            "POST" => self.http_client.post(&url),
-            "PUT" => self.http_client.put(&url),
-            "DELETE" => self.http_client.delete(&url),
->>>>>>> Stashed changes
+                    .header("User-Agent", &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")))
+                    .call()?
+            }
             _ => {
                 return Err(TapsilatError::ConfigError(format!(
                     "Unsupported HTTP method: {}",
@@ -153,30 +125,10 @@ impl TapsilatClient {
             }
         };
 
-<<<<<<< Updated upstream
         if response.status().as_u16() >= 400 {
             let status_code = response.status().as_u16();
             let body_text = response.body_mut().read_to_string().unwrap_or_default();
-            let error_body: serde_json::Value =
-                serde_json::from_str(&body_text).unwrap_or_default();
-=======
-        request = request
-            .set("Authorization", &format!("Bearer {}", self.config.api_key))
-            .set("Content-Type", "application/json")
-            .set(
-                "User-Agent",
-                &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
-            );
-
-        let response = match body {
-            Some(data) => request.send_json(data)?,
-            None => request.call()?,
-        };
-
-        if response.status() >= 400 {
-            let status_code = response.status();
-            let error_body: serde_json::Value = response.into_json().unwrap_or_default();
->>>>>>> Stashed changes
+            let error_body: serde_json::Value = serde_json::from_str(&body_text).unwrap_or_default();
             let message = error_body["message"]
                 .as_str()
                 .unwrap_or("Unknown API error")
@@ -188,14 +140,12 @@ impl TapsilatClient {
             });
         }
 
-        let body_text = response.body_mut().read_to_string().map_err(|e| {
-            TapsilatError::ConfigError(format!("Failed to read response body: {}", e))
-        })?;
-
-        let json_response: serde_json::Value = serde_json::from_str(&body_text).map_err(|e| {
-            TapsilatError::ConfigError(format!("Failed to parse response JSON: {}", e))
-        })?;
-
+        let body_text = response.body_mut().read_to_string()
+            .map_err(|e| TapsilatError::ConfigError(format!("Failed to read response body: {}", e)))?;
+        
+        let json_response: serde_json::Value = serde_json::from_str(&body_text)
+            .map_err(|e| TapsilatError::ConfigError(format!("Failed to parse response JSON: {}", e)))?;
+        
         Ok(json_response)
     }
 }

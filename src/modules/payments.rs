@@ -1,14 +1,7 @@
 use crate::error::Result;
-<<<<<<< Updated upstream
-use crate::types::{
-    ApiResponse, CreatePaymentRequest, PaginatedResponse, PaginationParams, Payment,
-    PaymentResponse,
-};
-=======
 use crate::types::{ApiResponse, CreatePaymentRequest, Payment, PaymentResponse, PaginatedResponse, PaginationParams};
 use crate::modules::validators::Validators;
 use std::sync::Arc;
->>>>>>> Stashed changes
 
 pub struct PaymentModule {
     client: Arc<crate::client::TapsilatClient>,
@@ -24,7 +17,7 @@ impl PaymentModule {
         Validators::validate_amount(request.amount)?;
 
         let response = self.client.make_request("POST", "payments", Some(&request))?;
-        let api_response: ApiResponse<PaymentResponse> = response.into_json()?;
+        let api_response: ApiResponse<PaymentResponse> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(payment_response) => Ok(payment_response),
@@ -43,7 +36,7 @@ impl PaymentModule {
 
         let endpoint = format!("payments/{}", payment_id);
         let response = self.client.make_request::<()>("GET", &endpoint, None)?;
-        let api_response: ApiResponse<Payment> = response.into_json()?;
+        let api_response: ApiResponse<Payment> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(payment) => Ok(payment),
@@ -75,7 +68,7 @@ impl PaymentModule {
         }
 
         let response = self.client.make_request::<()>("GET", &endpoint, None)?;
-        let api_response: ApiResponse<PaginatedResponse<Payment>> = response.into_json()?;
+        let api_response: ApiResponse<PaginatedResponse<Payment>> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(paginated_payments) => Ok(paginated_payments),
@@ -94,7 +87,7 @@ impl PaymentModule {
 
         let endpoint = format!("payments/{}/cancel", payment_id);
         let response = self.client.make_request::<()>("POST", &endpoint, None)?;
-        let api_response: ApiResponse<Payment> = response.into_json()?;
+        let api_response: ApiResponse<Payment> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(payment) => Ok(payment),

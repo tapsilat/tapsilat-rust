@@ -21,7 +21,7 @@ impl OrderModule {
         self.validate_create_order_request(&mut request)?;
 
         let response = self.client.make_request("POST", "orders", Some(&request))?;
-        let api_response: ApiResponse<OrderResponse> = response.into_json()?;
+        let api_response: ApiResponse<OrderResponse> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(order_response) => Ok(order_response),
@@ -41,7 +41,7 @@ impl OrderModule {
 
         let endpoint = format!("orders/{}", order_id);
         let response = self.client.make_request::<()>("GET", &endpoint, None)?;
-        let api_response: ApiResponse<Order> = response.into_json()?;
+        let api_response: ApiResponse<Order> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(order) => Ok(order),
@@ -61,7 +61,7 @@ impl OrderModule {
 
         let endpoint = format!("orders/{}/status", order_id);
         let response = self.client.make_request::<()>("GET", &endpoint, None)?;
-        let api_response: ApiResponse<serde_json::Value> = response.into_json()?;
+        let api_response: ApiResponse<serde_json::Value> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(status_data) => {
@@ -100,7 +100,7 @@ impl OrderModule {
         }
 
         let response = self.client.make_request::<()>("GET", &endpoint, None)?;
-        let api_response: ApiResponse<PaginatedResponse<Order>> = response.into_json()?;
+        let api_response: ApiResponse<PaginatedResponse<Order>> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(paginated_orders) => Ok(paginated_orders),
@@ -120,7 +120,7 @@ impl OrderModule {
 
         let endpoint = format!("orders/{}/cancel", order_id);
         let response = self.client.make_request::<()>("POST", &endpoint, None)?;
-        let api_response: ApiResponse<Order> = response.into_json()?;
+        let api_response: ApiResponse<Order> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(order) => Ok(order),
@@ -145,7 +145,7 @@ impl OrderModule {
 
         let endpoint = format!("orders/{}/refund", order_id);
         let response = self.client.make_request("POST", &endpoint, Some(&request))?;
-        let api_response: ApiResponse<RefundOrderResponse> = response.into_json()?;
+        let api_response: ApiResponse<RefundOrderResponse> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(refund_response) => Ok(refund_response),
@@ -165,7 +165,7 @@ impl OrderModule {
 
         let endpoint = format!("orders/{}/checkout", order_id);
         let response = self.client.make_request::<()>("GET", &endpoint, None)?;
-        let api_response: ApiResponse<serde_json::Value> = response.into_json()?;
+        let api_response: ApiResponse<serde_json::Value> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(checkout_data) => {
@@ -191,7 +191,7 @@ impl OrderModule {
             Validators::validate_email(&buyer.email)?;
             
             // Validate and normalize GSM
-            let normalized_gsm = Validators::validate_gsm(&buyer.gsm)?;
+            let _normalized_gsm = Validators::validate_gsm(&buyer.gsm)?;
             // Note: We can't modify the GSM here because we only have a reference
             // The user should handle GSM normalization before calling this method
         }
