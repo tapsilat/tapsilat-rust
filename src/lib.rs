@@ -8,6 +8,7 @@ pub use client::TapsilatClient;
 pub use config::Config;
 pub use error::{Result, TapsilatError};
 pub use types::*;
+pub use modules::{PaymentModule, OrderModule, InstallmentModule, WebhookModule, Validators};
 
 #[cfg(test)]
 mod tests {

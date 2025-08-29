@@ -7,6 +7,7 @@ pub enum TapsilatError {
     InvalidResponse(String),
     ApiError { status_code: u16, message: String },
     ConfigError(String),
+    ValidationError(String),
 }
 
 impl fmt::Display for TapsilatError {
@@ -22,6 +23,7 @@ impl fmt::Display for TapsilatError {
                 write!(f, "API error ({}): {}", status_code, message)
             }
             TapsilatError::ConfigError(msg) => write!(f, "Configuration error: {}", msg),
+            TapsilatError::ValidationError(msg) => write!(f, "Validation error: {}", msg),
         }
     }
 }

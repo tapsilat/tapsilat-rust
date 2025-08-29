@@ -1,11 +1,16 @@
 use crate::config::Config;
 use crate::error::{Result, TapsilatError};
+<<<<<<< Updated upstream
 use crate::modules::payments::PaymentModule;
+=======
+use crate::modules::{PaymentModule, OrderModule, InstallmentModule, WebhookModule};
+use std::time::Duration;
+>>>>>>> Stashed changes
 
+#[derive(Clone)]
 pub struct TapsilatClient {
     config: Config,
     http_client: ureq::Agent,
-    pub payments: PaymentModule,
 }
 
 impl TapsilatClient {
@@ -14,12 +19,9 @@ impl TapsilatClient {
 
         let http_client = ureq::Agent::new_with_defaults();
 
-        let payments = PaymentModule::new(&config);
-
         Ok(Self {
             config,
             http_client,
-            payments,
         })
     }
 
@@ -28,12 +30,39 @@ impl TapsilatClient {
         Self::new(config)
     }
 
+<<<<<<< Updated upstream
+=======
+    /// Access to payment operations
+    pub fn payments(&self) -> PaymentModule {
+        PaymentModule::new(std::sync::Arc::new(self.clone()))
+    }
+
+    /// Access to order operations
+    pub fn orders(&self) -> OrderModule {
+        OrderModule::new(std::sync::Arc::new(self.clone()))
+    }
+
+    /// Access to installment operations
+    pub fn installments(&self) -> InstallmentModule {
+        InstallmentModule::new(std::sync::Arc::new(self.clone()))
+    }
+
+    /// Access to webhook operations
+    pub fn webhooks() -> &'static WebhookModule {
+        &WebhookModule
+    }
+
+>>>>>>> Stashed changes
     pub(crate) fn make_request<T>(
         &self,
         method: &str,
         endpoint: &str,
         body: Option<&T>,
+<<<<<<< Updated upstream
     ) -> Result<serde_json::Value>
+=======
+    ) -> Result<ureq::Response>
+>>>>>>> Stashed changes
     where
         T: serde::Serialize,
     {
@@ -43,6 +72,7 @@ impl TapsilatClient {
             endpoint.trim_start_matches('/')
         );
 
+<<<<<<< Updated upstream
         let mut response = match method.to_uppercase().as_str() {
             "GET" => self
                 .http_client
@@ -108,6 +138,13 @@ impl TapsilatClient {
                     &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                 )
                 .call()?,
+=======
+        let mut request = match method.to_uppercase().as_str() {
+            "GET" => self.http_client.get(&url),
+            "POST" => self.http_client.post(&url),
+            "PUT" => self.http_client.put(&url),
+            "DELETE" => self.http_client.delete(&url),
+>>>>>>> Stashed changes
             _ => {
                 return Err(TapsilatError::ConfigError(format!(
                     "Unsupported HTTP method: {}",
@@ -116,11 +153,30 @@ impl TapsilatClient {
             }
         };
 
+<<<<<<< Updated upstream
         if response.status().as_u16() >= 400 {
             let status_code = response.status().as_u16();
             let body_text = response.body_mut().read_to_string().unwrap_or_default();
             let error_body: serde_json::Value =
                 serde_json::from_str(&body_text).unwrap_or_default();
+=======
+        request = request
+            .set("Authorization", &format!("Bearer {}", self.config.api_key))
+            .set("Content-Type", "application/json")
+            .set(
+                "User-Agent",
+                &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+            );
+
+        let response = match body {
+            Some(data) => request.send_json(data)?,
+            None => request.call()?,
+        };
+
+        if response.status() >= 400 {
+            let status_code = response.status();
+            let error_body: serde_json::Value = response.into_json().unwrap_or_default();
+>>>>>>> Stashed changes
             let message = error_body["message"]
                 .as_str()
                 .unwrap_or("Unknown API error")
