@@ -1,12 +1,32 @@
+//! Error types and handling for the Tapsilat SDK.
+//!
+//! This module defines the comprehensive error types that can occur when using the SDK,
+//! including HTTP errors, validation errors, and API-specific errors.
+
 use std::fmt;
 
+/// Main error type for all Tapsilat SDK operations.
+///
+/// This enum covers all possible error conditions that can occur when
+/// using the SDK, from network issues to validation failures.
 #[derive(Debug)]
 pub enum TapsilatError {
+    /// HTTP transport error occurred during API communication.
     Http(ureq::Error),
+    /// Error occurred while serializing or deserializing data.
     Serialization(std::io::Error),
+    /// API returned an invalid or unexpected response format.
     InvalidResponse(String),
-    ApiError { status_code: u16, message: String },
+    /// API returned an error status code with an error message.
+    ApiError {
+        /// HTTP status code returned by the API
+        status_code: u16,
+        /// Error message from the API
+        message: String,
+    },
+    /// Configuration error, such as missing API key or invalid base URL.
     ConfigError(String),
+    /// Input validation error occurred before making API request.
     ValidationError(String),
 }
 

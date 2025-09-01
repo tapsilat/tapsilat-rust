@@ -1,9 +1,36 @@
+//! HTTP client implementation for the Tapsilat API.
+//!
+//! This module contains the main [`TapsilatClient`] which handles all HTTP communication
+//! with the Tapsilat API, including authentication, request/response processing, and error handling.
+
 use crate::config::Config;
 use crate::error::{Result, TapsilatError};
 use crate::modules::{InstallmentModule, OrderModule, PaymentModule, WebhookModule};
 use crate::types::*;
 use serde_json::Value;
 
+/// Main client for interacting with the Tapsilat API.
+///
+/// The `TapsilatClient` provides both direct methods for API operations and modular
+/// interfaces through accessor methods like `orders()`, `payments()`, etc.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use tapsilat::{Config, TapsilatClient};
+///
+/// # fn example() -> Result<(), Box<dyn std::error::Error>> {
+/// let config = Config::new("your-api-key");
+/// let client = TapsilatClient::new(config)?;
+/// 
+/// // Use direct methods
+/// // let order = client.create_order(order_request)?;
+/// 
+/// // Or use modular interface
+/// // let order = client.orders().create(order_request)?;
+/// # Ok(())
+/// # }
+/// ```
 #[derive(Clone)]
 pub struct TapsilatClient {
     config: Config,

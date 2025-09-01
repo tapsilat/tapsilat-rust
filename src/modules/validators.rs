@@ -109,7 +109,7 @@ impl Validators {
         let sum_odd: u8 = digits[0] + digits[2] + digits[4] + digits[6] + digits[8];
         let sum_even: u8 = digits[1] + digits[3] + digits[5] + digits[7];
 
-        let check_digit_10 = ((sum_odd * 7 - sum_even) % 10) as u8;
+        let check_digit_10 = (sum_odd * 7 - sum_even) % 10;
         if check_digit_10 != digits[9] {
             return Err(TapsilatError::ValidationError(
                 "Invalid identity number checksum".to_string(),
@@ -117,7 +117,7 @@ impl Validators {
         }
 
         let total_sum: u8 = digits[0..10].iter().sum();
-        let check_digit_11 = (total_sum % 10) as u8;
+        let check_digit_11 = total_sum % 10;
         if check_digit_11 != digits[10] {
             return Err(TapsilatError::ValidationError(
                 "Invalid identity number checksum".to_string(),

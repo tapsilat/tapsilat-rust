@@ -12,7 +12,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("===============================================\n");
 
     // Get API key from environment
-    let api_key = env::var("TAPSILAT_API_KEY").unwrap_or_else(|_| "".to_string());
+    let api_key = env::var("TAPSILAT_API_KEY").unwrap_or_else(|_| {
+        "".to_string()
+    });
 
     println!(
         "🚀 Running with API KEY: {}...{}",
