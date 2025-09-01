@@ -13,11 +13,6 @@
 
 ---
 
-## Installation
-
-```bash
-npm install @tapsilat/tapsilat-js
-```
 
 ## Quick Start
 
