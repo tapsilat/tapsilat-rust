@@ -2,7 +2,6 @@
 
 <div align="center">
 
-[![Tapsilat Logo](https://tapsilat.com/og-tapsilat.png)](https://tapsilat.dev)
 
 **Enterprise-grade Rust SDK for Tapsilat Payment Processing Platform**
 
