@@ -1,6 +1,6 @@
+use chrono;
 use serde_json::Value;
 use std::env;
-use chrono;
 use tapsilat::{
     Config, CreateAddressRequest, CreateBuyerRequest, CreateInstallmentPlanRequest,
     CreateOrderItemRequest, CreateOrderRequest, Currency, TapsilatClient, Validators,
@@ -12,11 +12,13 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("===============================================\n");
 
     // Get API key from environment
-    let api_key = env::var("TAPSILAT_API_KEY").unwrap_or_else(|_| {
-        "".to_string()
-    });
+    let api_key = env::var("TAPSILAT_API_KEY").unwrap_or_else(|_| "".to_string());
 
-    println!("🚀 Running with API KEY: {}...{}", &api_key[..8], &api_key[api_key.len()-4..]);
+    println!(
+        "🚀 Running with API KEY: {}...{}",
+        &api_key[..8],
+        &api_key[api_key.len() - 4..]
+    );
     println!();
 
     // 1. Advanced Client Configuration

@@ -33,7 +33,7 @@ pub struct CreateBuyerRequest {
     pub identity_number: Option<String>,
     #[serde(rename = "shippingAddress")]
     pub shipping_address: Option<CreateAddressRequest>,
-    #[serde(rename = "billingAddress")]  
+    #[serde(rename = "billingAddress")]
     pub billing_address: Option<CreateAddressRequest>,
 }
 

@@ -197,8 +197,12 @@ impl TapsilatClient {
         eprintln!("\n🚀 HTTP Request Debug:");
         eprintln!("   Method: {}", method);
         eprintln!("   URL: {}", url);
-        eprintln!("   Authorization: Bearer {}...{}", &self.config.api_key[..10], &self.config.api_key[self.config.api_key.len()-10..]);
-        
+        eprintln!(
+            "   Authorization: Bearer {}...{}",
+            &self.config.api_key[..10],
+            &self.config.api_key[self.config.api_key.len() - 10..]
+        );
+
         if let Some(body) = &body {
             let body_json = serde_json::to_string_pretty(body).unwrap_or_default();
             eprintln!("   Request Body:\n{}", body_json);
@@ -282,12 +286,12 @@ impl TapsilatClient {
         if response.status().as_u16() >= 400 {
             let status_code = response.status().as_u16();
             let body_text = response.body_mut().read_to_string().unwrap_or_default();
-            
+
             // Debug logging for errors
             eprintln!("\n❌ HTTP Error Response Debug:");
             eprintln!("   Status: {} {}", status_code, response.status());
             eprintln!("   Error Body:\n{}", body_text);
-            
+
             let error_body: serde_json::Value =
                 serde_json::from_str(&body_text).unwrap_or_default();
             let message = error_body["message"]
