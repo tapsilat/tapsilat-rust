@@ -59,9 +59,13 @@ pub enum Currency {
 pub struct CreateOrderRequest {
     pub amount: f64,
     pub currency: Currency,
+    pub locale: Option<String>,
+    #[serde(rename = "conversationId")]
+    pub conversation_id: Option<String>,
     pub description: Option<String>,
     pub buyer: Option<CreateBuyerRequest>,
     pub items: Vec<CreateOrderItemRequest>,
+    #[serde(rename = "callbackUrl")]
     pub callback_url: Option<String>,
     pub metadata: Option<HashMap<String, serde_json::Value>>,
 }

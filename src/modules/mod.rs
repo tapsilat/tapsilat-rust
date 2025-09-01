@@ -1,11 +1,11 @@
-pub mod payments;
-pub mod orders;
 pub mod installments;
-pub mod webhooks;
+pub mod orders;
+pub mod payments;
 pub mod validators;
+pub mod webhooks;
 
-pub use payments::PaymentModule;
-pub use orders::OrderModule;
 pub use installments::InstallmentModule;
-pub use webhooks::WebhookModule;
+pub use orders::OrderModule;
+pub use payments::PaymentModule;
 pub use validators::Validators;
+pub use webhooks::WebhookModule;

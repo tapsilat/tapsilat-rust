@@ -1,53 +1,43 @@
-# Tapsilat Rust SDK Examples
+# Tapsilat Rust SDK Example
 
-This directory contains examples demonstrating how to use the Tapsilat Rust SDK.
+This directory contains a comprehensive example demonstrating the Tapsilat Rust SDK usage.
 
-## Available Examples
+## Available Example
 
-### 1. SDK Demo (`sdk_demo.rs`)
-Demonstrates basic SDK initialization and client creation:
-- SDK configuration setup
-- Client initialization
-- Error handling
-
-**Run with:**
-```bash
-cargo run --example sdk_demo
-```
-
-### 2. Basic Usage (`basic_usage.rs`)
-Demonstrates the fundamental usage of the SDK functions:
-- Simple function calls
-- Formatting with the result
-- Multiple calls in loops
-
-**Run with:**
-```bash
-cargo run --example basic_usage
-```
-
-### 3. Advanced Usage (`advanced_usage.rs`)
-Shows more sophisticated usage patterns:
-- Using the function in structs and implementations
-- Working with collections
-- Conditional usage patterns
+### Advanced Usage (`advanced_usage.rs`)
+Complete demonstration of the Tapsilat Rust SDK including:
+- Client configuration and initialization
+- Order creation with buyer information
+- Direct API methods
+- Installment plan creation
+- Webhook verification and parsing
+- All available SDK operations
+- Both direct and module-based API usage
 
 **Run with:**
 ```bash
 cargo run --example advanced_usage
 ```
 
-## Running All Examples
+## Features Demonstrated
 
-You can run all examples with:
-```bash
-# List all examples
-cargo run --example
+- ✅ **Direct API**: Direct method calls like `client.create_order()`
+- ✅ **Module API**: Traditional approach like `client.orders().create()`
+- ✅ **Validation**: GSM number, installment, and other data validation
+- ✅ **Webhooks**: Signature verification and payload parsing
+- ✅ **Complete Integration**: Real-world usage patterns
 
-# Run specific example
-cargo run --example <example_name>
+## API Compatibility
+
+The SDK provides two API styles:
+
+```rust
+// Direct API
+let order = client.create_order(request)?;
+let checkout_url = client.get_checkout_url(&order_id)?;
+client.verify_webhook(payload, signature, secret)?;
+
+// Module API
+let order = client.orders().create(request)?;
+let checkout_url = client.payments().get_checkout_url(&order_id)?;
 ```
-
-## Example Output
-
-The examples will output various greeting messages and demonstrate different ways to integrate the Tapsilat SDK into your Rust applications.

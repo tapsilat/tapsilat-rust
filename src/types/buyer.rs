@@ -28,9 +28,13 @@ pub struct CreateBuyerRequest {
     pub name: String,
     pub surname: String,
     pub email: String,
-    pub gsm: String,
+    pub phone: Option<String>,
+    #[serde(rename = "identityNumber")]
     pub identity_number: Option<String>,
-    pub address: Option<CreateAddressRequest>,
+    #[serde(rename = "shippingAddress")]
+    pub shipping_address: Option<CreateAddressRequest>,
+    #[serde(rename = "billingAddress")]  
+    pub billing_address: Option<CreateAddressRequest>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,21 +1,24 @@
-use crate::types::{WebhookEvent, WebhookVerificationResult, WebhookVerificationConfig};
 use crate::error::{Result, TapsilatError};
+use crate::types::{WebhookEvent, WebhookVerificationConfig, WebhookVerificationResult};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 pub struct WebhookModule;
 
 impl WebhookModule {
-    /// Verifies webhook signature and timestamp
-    pub fn verify_webhook(
+    pub fn verify_webhook(payload: &str, signature: &str, secret: &str) -> Result<bool> {
+        Self::verify_signature(payload, signature, secret)
+    }
+
+    /// Verifies webhook signature and timestamp (advanced version)
+    pub fn verify_webhook_advanced(
         payload: &str,
         signature: &str,
         config: &WebhookVerificationConfig,
     ) -> Result<WebhookVerificationResult> {
         // Parse the webhook event to get timestamp
-        let webhook_event: WebhookEvent = serde_json::from_str(payload)
-            .map_err(|e| TapsilatError::InvalidResponse(
-                format!("Invalid webhook payload: {}", e)
-            ))?;
+        let webhook_event: WebhookEvent = serde_json::from_str(payload).map_err(|e| {
+            TapsilatError::InvalidResponse(format!("Invalid webhook payload: {}", e))
+        })?;
 
         // Verify timestamp if tolerance is set
         if let Some(tolerance) = config.tolerance_seconds {
@@ -31,21 +34,24 @@ impl WebhookModule {
         match Self::verify_signature(payload, signature, &config.secret) {
             Ok(is_valid) => Ok(WebhookVerificationResult {
                 is_valid,
-                error: if is_valid { None } else { Some("Invalid signature".to_string()) },
+                error: if is_valid {
+                    None
+                } else {
+                    Some("Invalid signature".to_string())
+                },
             }),
             Err(e) => Ok(WebhookVerificationResult {
                 is_valid: false,
                 error: Some(format!("Signature verification error: {}", e)),
-            })
+            }),
         }
     }
 
     /// Parses webhook payload into WebhookEvent
     pub fn parse_webhook(payload: &str) -> Result<WebhookEvent> {
-        serde_json::from_str(payload)
-            .map_err(|e| TapsilatError::InvalidResponse(
-                format!("Failed to parse webhook payload: {}", e)
-            ))
+        serde_json::from_str(payload).map_err(|e| {
+            TapsilatError::InvalidResponse(format!("Failed to parse webhook payload: {}", e))
+        })
     }
 
     /// Verifies webhook signature using HMAC-SHA256
@@ -55,7 +61,7 @@ impl WebhookModule {
 
         // Create expected signature
         let expected_signature = Self::create_signature(payload, secret)?;
-        
+
         // Compare signatures (constant time comparison would be better for production)
         Ok(signature == expected_signature)
     }
@@ -70,7 +76,7 @@ impl WebhookModule {
         let mut hasher = DefaultHasher::new();
         format!("{}{}", secret, payload).hash(&mut hasher);
         let hash = hasher.finish();
-        
+
         Ok(format!("{:x}", hash))
     }
 
@@ -82,17 +88,14 @@ impl WebhookModule {
             Self::parse_iso8601_timestamp(timestamp_str)?
         } else {
             // Assume Unix timestamp
-            timestamp_str.parse::<u64>()
-                .map_err(|e| TapsilatError::InvalidResponse(
-                    format!("Invalid timestamp format: {}", e)
-                ))?
+            timestamp_str.parse::<u64>().map_err(|e| {
+                TapsilatError::InvalidResponse(format!("Invalid timestamp format: {}", e))
+            })?
         };
 
         let current_time = SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .map_err(|e| TapsilatError::InvalidResponse(
-                format!("System time error: {}", e)
-            ))?
+            .map_err(|e| TapsilatError::InvalidResponse(format!("System time error: {}", e)))?
             .as_secs();
 
         let time_diff = if current_time > webhook_time {
@@ -102,10 +105,10 @@ impl WebhookModule {
         };
 
         if time_diff > tolerance_seconds {
-            return Err(TapsilatError::InvalidResponse(
-                format!("Webhook timestamp too old or too far in future. Difference: {}s, tolerance: {}s", 
-                    time_diff, tolerance_seconds)
-            ));
+            return Err(TapsilatError::InvalidResponse(format!(
+                "Webhook timestamp too old or too far in future. Difference: {}s, tolerance: {}s",
+                time_diff, tolerance_seconds
+            )));
         }
 
         Ok(())
@@ -115,19 +118,20 @@ impl WebhookModule {
     fn parse_iso8601_timestamp(_timestamp: &str) -> Result<u64> {
         // This is a simplified parser
         // In production, use a proper datetime parsing library like chrono
-        
+
         // For now, just return current timestamp as fallback
         // TODO: Implement proper ISO 8601 parsing
         SystemTime::now()
             .duration_since(UNIX_EPOCH)
-            .map_err(|e| TapsilatError::InvalidResponse(
-                format!("Timestamp parsing error: {}", e)
-            ))
+            .map_err(|e| TapsilatError::InvalidResponse(format!("Timestamp parsing error: {}", e)))
             .map(|d| d.as_secs())
     }
 
     /// Utility method to construct webhook verification config
-    pub fn create_verification_config(secret: String, tolerance_seconds: Option<u64>) -> WebhookVerificationConfig {
+    pub fn create_verification_config(
+        secret: String,
+        tolerance_seconds: Option<u64>,
+    ) -> WebhookVerificationConfig {
         WebhookVerificationConfig {
             secret,
             tolerance_seconds,
@@ -141,11 +145,9 @@ mod tests {
 
     #[test]
     fn test_webhook_verification_config() {
-        let config = WebhookModule::create_verification_config(
-            "test_secret".to_string(),
-            Some(300)
-        );
-        
+        let config =
+            WebhookModule::create_verification_config("test_secret".to_string(), Some(300));
+
         assert_eq!(config.secret, "test_secret");
         assert_eq!(config.tolerance_seconds, Some(300));
     }
@@ -165,8 +167,11 @@ mod tests {
 
         let result = WebhookModule::parse_webhook(payload);
         assert!(result.is_ok());
-        
+
         let webhook = result.unwrap();
-        assert!(matches!(webhook.event_type, crate::types::WebhookEventType::OrderCompleted));
+        assert!(matches!(
+            webhook.event_type,
+            crate::types::WebhookEventType::OrderCompleted
+        ));
     }
 }

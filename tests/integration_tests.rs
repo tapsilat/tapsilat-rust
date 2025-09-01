@@ -1,4 +1,4 @@
-use tapsilat::{TapsilatClient, Config, CreateOrderRequest, CreateOrderItemRequest, Currency};
+use tapsilat::{Config, CreateOrderItemRequest, CreateOrderRequest, Currency, TapsilatClient};
 
 #[test]
 fn test_client_creation() {
@@ -10,7 +10,7 @@ fn test_client_creation() {
 fn test_config_validation() {
     let config = Config::new("test-key");
     assert!(config.validate().is_ok());
-    
+
     let empty_config = Config::new("");
     assert!(empty_config.validate().is_err());
 }
@@ -21,19 +21,17 @@ fn test_order_creation_request() {
         amount: 100.0,
         currency: Currency::TRY,
         description: Some("Test order".to_string()),
-        items: vec![
-            CreateOrderItemRequest {
-                name: "Test Item".to_string(),
-                price: 100.0,
-                quantity: 1,
-                description: None,
-            }
-        ],
+        items: vec![CreateOrderItemRequest {
+            name: "Test Item".to_string(),
+            price: 100.0,
+            quantity: 1,
+            description: None,
+        }],
         buyer: None,
         callback_url: None,
         metadata: None,
     };
-    
+
     // Should be valid
     assert_eq!(request.amount, 100.0);
     assert!(matches!(request.currency, Currency::TRY));
@@ -43,22 +41,22 @@ fn test_order_creation_request() {
 #[test]
 fn test_validators() {
     use tapsilat::Validators;
-    
+
     // GSM validation
     assert!(Validators::validate_gsm("5551234567").is_ok());
     assert!(Validators::validate_gsm("05551234567").is_ok());
     assert!(Validators::validate_gsm("+905551234567").is_ok());
     assert!(Validators::validate_gsm("4551234567").is_err()); // Doesn't start with 5
-    
+
     // Email validation
     assert!(Validators::validate_email("test@example.com").is_ok());
     assert!(Validators::validate_email("invalid-email").is_err());
-    
+
     // Amount validation
     assert!(Validators::validate_amount(10.50).is_ok());
     assert!(Validators::validate_amount(-5.0).is_err());
     assert!(Validators::validate_amount(0.0).is_err());
-    
+
     // Installments validation
     assert!(Validators::validate_installments(1).is_ok());
     assert!(Validators::validate_installments(12).is_ok());

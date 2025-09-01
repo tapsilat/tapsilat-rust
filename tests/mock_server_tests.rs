@@ -1,8 +1,8 @@
 use mockito::{Server, ServerGuard};
 use serde_json::json;
 use tapsilat::{
-    TapsilatClient, Config, CreateOrderRequest, CreateOrderItemRequest, Currency,
-    CreateInstallmentPlanRequest, RefundOrderRequest
+    Config, CreateInstallmentPlanRequest, CreateOrderItemRequest, CreateOrderRequest, Currency,
+    RefundOrderRequest, TapsilatClient,
 };
 
 async fn setup_mock_server() -> ServerGuard {
@@ -12,7 +12,7 @@ async fn setup_mock_server() -> ServerGuard {
 #[tokio::test]
 async fn test_order_creation_with_mock() {
     let mut server = setup_mock_server().await;
-    
+
     // Mock successful order creation
     let mock_response = json!({
         "success": true,
@@ -52,9 +52,8 @@ async fn test_order_creation_with_mock() {
         .await;
 
     // Configure client to use mock server
-    let config = Config::new("test-api-key")
-        .with_base_url(&server.url());
-    
+    let config = Config::new("test-api-key").with_base_url(&server.url());
+
     let client = TapsilatClient::new(config).unwrap();
 
     let order_request = CreateOrderRequest {
@@ -83,7 +82,7 @@ async fn test_order_creation_with_mock() {
 #[tokio::test]
 async fn test_order_get_with_mock() {
     let mut server = setup_mock_server().await;
-    
+
     let mock_response = json!({
         "success": true,
         "data": {
@@ -117,9 +116,8 @@ async fn test_order_get_with_mock() {
         .create_async()
         .await;
 
-    let config = Config::new("test-api-key")
-        .with_base_url(&server.url());
-    
+    let config = Config::new("test-api-key").with_base_url(&server.url());
+
     let client = TapsilatClient::new(config).unwrap();
 
     let result = client.orders().get("order_123");
@@ -133,7 +131,7 @@ async fn test_order_get_with_mock() {
 #[tokio::test]
 async fn test_installment_plan_creation_with_mock() {
     let mut server = setup_mock_server().await;
-    
+
     let mock_response = json!({
         "success": true,
         "data": {
@@ -166,9 +164,8 @@ async fn test_installment_plan_creation_with_mock() {
         .create_async()
         .await;
 
-    let config = Config::new("test-api-key")
-        .with_base_url(&server.url());
-    
+    let config = Config::new("test-api-key").with_base_url(&server.url());
+
     let client = TapsilatClient::new(config).unwrap();
 
     let installment_request = CreateInstallmentPlanRequest {
@@ -178,7 +175,10 @@ async fn test_installment_plan_creation_with_mock() {
     };
 
     let result = client.installments().create_plan(installment_request);
-    assert!(result.is_ok(), "Installment plan creation should succeed with mock");
+    assert!(
+        result.is_ok(),
+        "Installment plan creation should succeed with mock"
+    );
 
     let plan = result.unwrap();
     assert_eq!(plan.id, "plan_456");
@@ -189,7 +189,7 @@ async fn test_installment_plan_creation_with_mock() {
 #[tokio::test]
 async fn test_error_handling_with_mock() {
     let mut server = setup_mock_server().await;
-    
+
     let mock_error_response = json!({
         "success": false,
         "message": "Invalid API key",
@@ -204,9 +204,8 @@ async fn test_error_handling_with_mock() {
         .create_async()
         .await;
 
-    let config = Config::new("invalid-api-key")
-        .with_base_url(&server.url());
-    
+    let config = Config::new("invalid-api-key").with_base_url(&server.url());
+
     let client = TapsilatClient::new(config).unwrap();
 
     let order_request = CreateOrderRequest {
@@ -231,7 +230,7 @@ async fn test_error_handling_with_mock() {
 #[tokio::test]
 async fn test_order_refund_with_mock() {
     let mut server = setup_mock_server().await;
-    
+
     let mock_response = json!({
         "success": true,
         "data": {
@@ -262,9 +261,8 @@ async fn test_order_refund_with_mock() {
         .create_async()
         .await;
 
-    let config = Config::new("test-api-key")
-        .with_base_url(&server.url());
-    
+    let config = Config::new("test-api-key").with_base_url(&server.url());
+
     let client = TapsilatClient::new(config).unwrap();
 
     let refund_request = RefundOrderRequest {
@@ -283,7 +281,7 @@ async fn test_order_refund_with_mock() {
 #[tokio::test]
 async fn test_pagination_with_mock() {
     let mut server = setup_mock_server().await;
-    
+
     let mock_response = json!({
         "success": true,
         "data": {
@@ -317,9 +315,8 @@ async fn test_pagination_with_mock() {
         .create_async()
         .await;
 
-    let config = Config::new("test-api-key")
-        .with_base_url(&server.url());
-    
+    let config = Config::new("test-api-key").with_base_url(&server.url());
+
     let client = TapsilatClient::new(config).unwrap();
 
     let pagination = tapsilat::PaginationParams {

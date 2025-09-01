@@ -1,9 +1,9 @@
 use crate::error::Result;
-use crate::types::{
-    CreateOrderRequest, Order, OrderResponse, RefundOrderRequest, RefundOrderResponse,
-    PaginatedResponse, PaginationParams, ApiResponse
-};
 use crate::modules::validators::Validators;
+use crate::types::{
+    ApiResponse, CreateOrderRequest, Order, OrderResponse, PaginatedResponse, PaginationParams,
+    RefundOrderRequest, RefundOrderResponse,
+};
 use std::sync::Arc;
 
 pub struct OrderModule {
@@ -26,8 +26,10 @@ impl OrderModule {
         match api_response.data {
             Some(order_response) => Ok(order_response),
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No order data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No order data in response".to_string()),
+            )),
         }
     }
 
@@ -35,7 +37,7 @@ impl OrderModule {
     pub fn get(&self, order_id: &str) -> Result<Order> {
         if order_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
-                "Order ID cannot be empty".to_string()
+                "Order ID cannot be empty".to_string(),
             ));
         }
 
@@ -46,8 +48,10 @@ impl OrderModule {
         match api_response.data {
             Some(order) => Ok(order),
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No order data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No order data in response".to_string()),
+            )),
         }
     }
 
@@ -55,7 +59,7 @@ impl OrderModule {
     pub fn get_status(&self, order_id: &str) -> Result<String> {
         if order_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
-                "Order ID cannot be empty".to_string()
+                "Order ID cannot be empty".to_string(),
             ));
         }
 
@@ -65,15 +69,18 @@ impl OrderModule {
 
         match api_response.data {
             Some(status_data) => {
-                let status = status_data["status"].as_str()
-                    .ok_or_else(|| crate::error::TapsilatError::InvalidResponse(
-                        "Status field not found in response".to_string()
-                    ))?;
+                let status = status_data["status"].as_str().ok_or_else(|| {
+                    crate::error::TapsilatError::InvalidResponse(
+                        "Status field not found in response".to_string(),
+                    )
+                })?;
                 Ok(status.to_string())
             }
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No status data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No status data in response".to_string()),
+            )),
         }
     }
 
@@ -84,11 +91,11 @@ impl OrderModule {
         // Add pagination parameters
         if let Some(params) = pagination {
             let mut query_params = Vec::new();
-            
+
             if let Some(page) = params.page {
                 query_params.push(format!("page={}", page));
             }
-            
+
             if let Some(per_page) = params.per_page {
                 query_params.push(format!("per_page={}", per_page));
             }
@@ -105,8 +112,10 @@ impl OrderModule {
         match api_response.data {
             Some(paginated_orders) => Ok(paginated_orders),
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No orders data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No orders data in response".to_string()),
+            )),
         }
     }
 
@@ -114,7 +123,7 @@ impl OrderModule {
     pub fn cancel(&self, order_id: &str) -> Result<Order> {
         if order_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
-                "Order ID cannot be empty".to_string()
+                "Order ID cannot be empty".to_string(),
             ));
         }
 
@@ -125,16 +134,22 @@ impl OrderModule {
         match api_response.data {
             Some(order) => Ok(order),
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No order data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No order data in response".to_string()),
+            )),
         }
     }
 
     /// Refunds an order (full or partial)
-    pub fn refund(&self, order_id: &str, request: RefundOrderRequest) -> Result<RefundOrderResponse> {
+    pub fn refund(
+        &self,
+        order_id: &str,
+        request: RefundOrderRequest,
+    ) -> Result<RefundOrderResponse> {
         if order_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
-                "Order ID cannot be empty".to_string()
+                "Order ID cannot be empty".to_string(),
             ));
         }
 
@@ -144,14 +159,18 @@ impl OrderModule {
         }
 
         let endpoint = format!("orders/{}/refund", order_id);
-        let response = self.client.make_request("POST", &endpoint, Some(&request))?;
+        let response = self
+            .client
+            .make_request("POST", &endpoint, Some(&request))?;
         let api_response: ApiResponse<RefundOrderResponse> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(refund_response) => Ok(refund_response),
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No refund data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No refund data in response".to_string()),
+            )),
         }
     }
 
@@ -159,7 +178,7 @@ impl OrderModule {
     pub fn get_checkout_url(&self, order_id: &str) -> Result<String> {
         if order_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
-                "Order ID cannot be empty".to_string()
+                "Order ID cannot be empty".to_string(),
             ));
         }
 
@@ -169,15 +188,18 @@ impl OrderModule {
 
         match api_response.data {
             Some(checkout_data) => {
-                let checkout_url = checkout_data["checkout_url"].as_str()
-                    .ok_or_else(|| crate::error::TapsilatError::InvalidResponse(
-                        "Checkout URL not found in response".to_string()
-                    ))?;
+                let checkout_url = checkout_data["checkout_url"].as_str().ok_or_else(|| {
+                    crate::error::TapsilatError::InvalidResponse(
+                        "Checkout URL not found in response".to_string(),
+                    )
+                })?;
                 Ok(checkout_url.to_string())
             }
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No checkout data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No checkout data in response".to_string()),
+            )),
         }
     }
 
@@ -189,9 +211,11 @@ impl OrderModule {
         // Validate buyer if provided
         if let Some(buyer) = &request.buyer {
             Validators::validate_email(&buyer.email)?;
-            
+
             // Validate and normalize GSM
-            let _normalized_gsm = Validators::validate_gsm(&buyer.gsm)?;
+            if let Some(phone) = &buyer.phone {
+                let _normalized_gsm = Validators::validate_gsm(phone)?;
+            }
             // Note: We can't modify the GSM here because we only have a reference
             // The user should handle GSM normalization before calling this method
         }
@@ -199,36 +223,38 @@ impl OrderModule {
         // Validate items
         if request.items.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
-                "Order must have at least one item".to_string()
+                "Order must have at least one item".to_string(),
             ));
         }
 
         for item in &request.items {
             Validators::validate_amount(item.price)?;
-            
+
             if item.quantity <= 0 {
                 return Err(crate::error::TapsilatError::ValidationError(
-                    "Item quantity must be greater than 0".to_string()
+                    "Item quantity must be greater than 0".to_string(),
                 ));
             }
 
             if item.name.trim().is_empty() {
                 return Err(crate::error::TapsilatError::ValidationError(
-                    "Item name cannot be empty".to_string()
+                    "Item name cannot be empty".to_string(),
                 ));
             }
         }
 
         // Validate total amount matches items
-        let calculated_total: f64 = request.items.iter()
+        let calculated_total: f64 = request
+            .items
+            .iter()
             .map(|item| item.price * item.quantity as f64)
             .sum();
 
         if (request.amount - calculated_total).abs() > 0.01 {
-            return Err(crate::error::TapsilatError::ValidationError(
-                format!("Order amount ({:.2}) doesn't match items total ({:.2})", 
-                    request.amount, calculated_total)
-            ));
+            return Err(crate::error::TapsilatError::ValidationError(format!(
+                "Order amount ({:.2}) doesn't match items total ({:.2})",
+                request.amount, calculated_total
+            )));
         }
 
         Ok(())

@@ -7,11 +7,14 @@ pub mod types;
 pub use client::TapsilatClient;
 pub use config::Config;
 pub use error::{Result, TapsilatError};
+pub use modules::{InstallmentModule, OrderModule, PaymentModule, Validators, WebhookModule};
 pub use types::*;
-pub use modules::{PaymentModule, OrderModule, InstallmentModule, WebhookModule, Validators};
 
 // Re-export installment types for convenience
-pub use modules::installments::{InstallmentPlan, Installment, InstallmentStatus, CreateInstallmentPlanRequest, UpdateInstallmentRequest, RefundInstallmentRequest};
+pub use modules::installments::{
+    CreateInstallmentPlanRequest, Installment, InstallmentPlan, InstallmentStatus,
+    RefundInstallmentRequest, UpdateInstallmentRequest,
+};
 
 #[cfg(test)]
 mod tests {

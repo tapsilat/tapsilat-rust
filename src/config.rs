@@ -11,7 +11,7 @@ impl Config {
     pub fn new(api_key: impl Into<String>) -> Self {
         Self {
             api_key: api_key.into(),
-            base_url: "https://api.tapsilat.com".to_string(),
+            base_url: "https://api.tapsilat.com/v1".to_string(),
             timeout: 30,
         }
     }

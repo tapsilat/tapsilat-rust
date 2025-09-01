@@ -1,6 +1,6 @@
 use crate::error::Result;
-use crate::types::{ApiResponse, PaginatedResponse, PaginationParams};
 use crate::modules::validators::Validators;
+use crate::types::{ApiResponse, PaginatedResponse, PaginationParams};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -74,14 +74,18 @@ impl InstallmentModule {
         // Validate request
         self.validate_create_request(&request)?;
 
-        let response = self.client.make_request("POST", "installments/plans", Some(&request))?;
+        let response = self
+            .client
+            .make_request("POST", "installments/plans", Some(&request))?;
         let api_response: ApiResponse<InstallmentPlan> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(plan) => Ok(plan),
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No installment plan data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No installment plan data in response".to_string()),
+            )),
         }
     }
 
@@ -89,7 +93,7 @@ impl InstallmentModule {
     pub fn get_plan(&self, plan_id: &str) -> Result<InstallmentPlan> {
         if plan_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
-                "Plan ID cannot be empty".to_string()
+                "Plan ID cannot be empty".to_string(),
             ));
         }
 
@@ -100,8 +104,10 @@ impl InstallmentModule {
         match api_response.data {
             Some(plan) => Ok(plan),
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No installment plan data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No installment plan data in response".to_string()),
+            )),
         }
     }
 
@@ -109,7 +115,7 @@ impl InstallmentModule {
     pub fn get_plans_by_order(&self, order_id: &str) -> Result<Vec<InstallmentPlan>> {
         if order_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
-                "Order ID cannot be empty".to_string()
+                "Order ID cannot be empty".to_string(),
             ));
         }
 
@@ -120,16 +126,22 @@ impl InstallmentModule {
         match api_response.data {
             Some(plans) => Ok(plans),
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No installment plans data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No installment plans data in response".to_string()),
+            )),
         }
     }
 
     /// Updates an installment
-    pub fn update_installment(&self, installment_id: &str, request: UpdateInstallmentRequest) -> Result<Installment> {
+    pub fn update_installment(
+        &self,
+        installment_id: &str,
+        request: UpdateInstallmentRequest,
+    ) -> Result<Installment> {
         if installment_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
-                "Installment ID cannot be empty".to_string()
+                "Installment ID cannot be empty".to_string(),
             ));
         }
 
@@ -145,8 +157,10 @@ impl InstallmentModule {
         match api_response.data {
             Some(installment) => Ok(installment),
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No installment data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No installment data in response".to_string()),
+            )),
         }
     }
 
@@ -154,7 +168,7 @@ impl InstallmentModule {
     pub fn cancel_plan(&self, plan_id: &str) -> Result<InstallmentPlan> {
         if plan_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
-                "Plan ID cannot be empty".to_string()
+                "Plan ID cannot be empty".to_string(),
             ));
         }
 
@@ -165,16 +179,22 @@ impl InstallmentModule {
         match api_response.data {
             Some(plan) => Ok(plan),
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No installment plan data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No installment plan data in response".to_string()),
+            )),
         }
     }
 
     /// Refunds an installment
-    pub fn refund_installment(&self, installment_id: &str, request: RefundInstallmentRequest) -> Result<Installment> {
+    pub fn refund_installment(
+        &self,
+        installment_id: &str,
+        request: RefundInstallmentRequest,
+    ) -> Result<Installment> {
         if installment_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
-                "Installment ID cannot be empty".to_string()
+                "Installment ID cannot be empty".to_string(),
             ));
         }
 
@@ -184,29 +204,36 @@ impl InstallmentModule {
         }
 
         let endpoint = format!("installments/{}/refund", installment_id);
-        let response = self.client.make_request("POST", &endpoint, Some(&request))?;
+        let response = self
+            .client
+            .make_request("POST", &endpoint, Some(&request))?;
         let api_response: ApiResponse<Installment> = serde_json::from_value(response)?;
 
         match api_response.data {
             Some(installment) => Ok(installment),
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No installment data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No installment data in response".to_string()),
+            )),
         }
     }
 
     /// Lists all installment plans with pagination
-    pub fn list_plans(&self, pagination: Option<PaginationParams>) -> Result<PaginatedResponse<InstallmentPlan>> {
+    pub fn list_plans(
+        &self,
+        pagination: Option<PaginationParams>,
+    ) -> Result<PaginatedResponse<InstallmentPlan>> {
         let mut endpoint = "installments/plans".to_string();
 
         // Add pagination parameters
         if let Some(params) = pagination {
             let mut query_params = Vec::new();
-            
+
             if let Some(page) = params.page {
                 query_params.push(format!("page={}", page));
             }
-            
+
             if let Some(per_page) = params.per_page {
                 query_params.push(format!("per_page={}", per_page));
             }
@@ -218,13 +245,16 @@ impl InstallmentModule {
         }
 
         let response = self.client.make_request::<()>("GET", &endpoint, None)?;
-        let api_response: ApiResponse<PaginatedResponse<InstallmentPlan>> = serde_json::from_value(response)?;
+        let api_response: ApiResponse<PaginatedResponse<InstallmentPlan>> =
+            serde_json::from_value(response)?;
 
         match api_response.data {
             Some(paginated_plans) => Ok(paginated_plans),
             None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No installment plans data in response".to_string())
-            ))
+                api_response
+                    .message
+                    .unwrap_or("No installment plans data in response".to_string()),
+            )),
         }
     }
 
@@ -232,7 +262,7 @@ impl InstallmentModule {
     fn validate_create_request(&self, request: &CreateInstallmentPlanRequest) -> Result<()> {
         if request.order_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
-                "Order ID cannot be empty".to_string()
+                "Order ID cannot be empty".to_string(),
             ));
         }
 
@@ -242,7 +272,7 @@ impl InstallmentModule {
         // Basic date format validation (should be more robust in production)
         if request.first_installment_date.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
-                "First installment date cannot be empty".to_string()
+                "First installment date cannot be empty".to_string(),
             ));
         }
 
