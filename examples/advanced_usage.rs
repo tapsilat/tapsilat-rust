@@ -26,7 +26,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Advanced Client Configuration
     println!("=== 1. CLIENT CONFIGURATION ===");
     let config = Config::new(&api_key)
-        .with_base_url("https://api.tapsilat.com/v1")
+        .with_base_url("https://acquiring.tapsilat.dev/api/v1")
         .with_timeout(30);
 
     let client = TapsilatClient::new(config)?;
@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &api_key[..8],
         &api_key[api_key.len() - 4..]
     );
-    println!("   Base URL: https://api.tapsilat.com/v1");
+    println!("   Base URL: https://acquiring.tapsilat.dev/api/v1");
     println!("   Timeout: 30s\n");
 
     // 2. Comprehensive Validator Testing
@@ -104,64 +104,28 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("=== 3. ORDER LIFECYCLE TESTING ===");
 
     let order_request = CreateOrderRequest {
-        amount: 18999.99,
+        amount: 299.99,
         currency: Currency::TRY,
         locale: Some("tr".to_string()),
         conversation_id: Some(format!("order-{}", chrono::Utc::now().timestamp())),
-        description: Some("Apple MacBook Air M2 + AppleCare+ Paketi".to_string()),
+        description: Some("Test Order".to_string()),
         buyer: Some(CreateBuyerRequest {
             name: "Ahmet".to_string(),
             surname: "Yılmaz".to_string(),
             email: "ahmet.yilmaz@gmail.com".to_string(),
             phone: Some("5321234567".to_string()),
-            identity_number: Some("11122334455".to_string()),
-            shipping_address: Some(CreateAddressRequest {
-                country: "Turkey".to_string(),
-                city: "İstanbul".to_string(),
-                district: Some("Kadıköy".to_string()),
-                address_line_1: "Moda Caddesi No: 45".to_string(),
-                address_line_2: Some("Kat 3 Daire 12".to_string()),
-                postal_code: Some("34710".to_string()),
-            }),
+            identity_number: None,
+            shipping_address: None,
             billing_address: None,
         }),
-        items: vec![
-            CreateOrderItemRequest {
-                name: "MacBook Air M2 13\" 256GB".to_string(),
-                price: 16999.99,
-                quantity: 1,
-                description: Some("Apple M2 chip, 8GB RAM, 256GB SSD - Gece Yarısı".to_string()),
-            },
-            CreateOrderItemRequest {
-                name: "AppleCare+ for MacBook Air".to_string(),
-                price: 2000.00,
-                quantity: 1,
-                description: Some("3 yıl AppleCare+ koruma planı".to_string()),
-            },
-        ],
-        callback_url: Some("https://api.itunesstore.com/webhook/payment-status".to_string()),
-        metadata: Some(std::collections::HashMap::from([
-            (
-                "order_type".to_string(),
-                Value::String("electronics_purchase".to_string()),
-            ),
-            (
-                "customer_id".to_string(),
-                Value::String("CUST-2024-001".to_string()),
-            ),
-            (
-                "store_location".to_string(),
-                Value::String("istanbul_kadikoy".to_string()),
-            ),
-            (
-                "sales_channel".to_string(),
-                Value::String("online".to_string()),
-            ),
-            (
-                "campaign_code".to_string(),
-                Value::String("MACBOOK2024".to_string()),
-            ),
-        ])),
+        items: vec![CreateOrderItemRequest {
+            name: "Test Product".to_string(),
+            price: 299.99,
+            quantity: 1,
+            description: Some("Test product description".to_string()),
+        }],
+        callback_url: None,
+        metadata: None,
     };
 
     println!("📦 Creating Order (Direct API)...");
@@ -179,25 +143,11 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut created_order_id = None;
 
     match client.create_order(order_request.clone()) {
-        Ok(order_response) => {
-            created_order_id = Some(order_response.order.id.clone());
+        Ok(create_response) => {
+            created_order_id = Some(create_response.order_id.clone());
             println!("   ✅ Order Created Successfully!");
-            println!("      Order ID: {}", order_response.order.id);
-            println!("      Status: {:?}", order_response.order.status);
-            println!(
-                "      Amount: {} {:?}",
-                order_response.order.amount, order_response.order.currency
-            );
-
-            if let Some(checkout_url) = order_response.checkout_url {
-                println!("      Checkout URL: {}", checkout_url);
-                // Validate URL format
-                if checkout_url.starts_with("https://") {
-                    println!("      ✅ Checkout URL format is valid");
-                } else {
-                    println!("      ⚠️ Checkout URL format might be invalid");
-                }
-            }
+            println!("      Order ID: {}", create_response.order_id);
+            println!("      Reference ID: {}", create_response.reference_id);
         }
         Err(e) => {
             println!("   ❌ Order Creation Failed: {}", e);
@@ -207,10 +157,10 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Test Module-based API as well
     println!("\n📦 Creating Order (Module API)...");
     match client.orders().create(order_request) {
-        Ok(order_response) => {
+        Ok(create_response) => {
             println!("   ✅ Module API Order Created!");
-            println!("      Order ID: {}", order_response.order.id);
-            println!("      Status: {:?}", order_response.order.status);
+            println!("      Order ID: {}", create_response.order_id);
+            println!("      Reference ID: {}", create_response.reference_id);
         }
         Err(e) => {
             println!("   ❌ Module API Order Creation Failed: {}", e);

@@ -85,6 +85,12 @@ pub struct OrderResponse {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreateOrderResponse {
+    pub order_id: String,
+    pub reference_id: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct RefundOrderRequest {
     pub amount: Option<f64>, // None for full refund
     pub reason: Option<String>,

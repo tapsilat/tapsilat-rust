@@ -29,7 +29,7 @@ fn get_test_client(api_key: &str) -> TapsilatClient {
 #[test]
 fn test_real_api_client_creation() {
     if let Some(api_key) = skip_if_no_api_key() {
-        let client = get_test_client(&api_key);
+        let _client = get_test_client(&api_key);
 
         // Just test that client was created successfully
         println!("✅ Real API client created successfully");
@@ -52,6 +52,8 @@ fn test_real_api_order_validation() {
         let order_request = CreateOrderRequest {
             amount: 149.99,
             currency: Currency::TRY,
+            locale: Some("tr".to_string()),
+            conversation_id: Some("test-123".to_string()),
             description: Some("Test Order from Rust SDK".to_string()),
             items: vec![CreateOrderItemRequest {
                 name: "Premium Package".to_string(),
@@ -120,6 +122,8 @@ fn test_real_api_live_order_creation() {
         let order_request = CreateOrderRequest {
             amount: 1.0, // Small amount for testing
             currency: Currency::TRY,
+            locale: Some("tr".to_string()),
+            conversation_id: Some("test-live-123".to_string()),
             description: Some("Rust SDK Live Test Order".to_string()),
             items: vec![CreateOrderItemRequest {
                 name: "Test Item".to_string(),
@@ -136,10 +140,8 @@ fn test_real_api_live_order_creation() {
         match client.orders().create(order_request) {
             Ok(response) => {
                 println!("✅ Live API test successful!");
-                println!("   Order ID: {}", response.order.id);
-                if let Some(checkout_url) = response.checkout_url {
-                    println!("   Checkout URL: {}", checkout_url);
-                }
+                println!("   Order ID: {}", response.order_id);
+                println!("   Reference ID: {}", response.reference_id);
             }
             Err(e) => {
                 println!("❌ Live API test failed: {:?}", e);

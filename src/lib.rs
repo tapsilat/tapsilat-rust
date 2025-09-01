@@ -34,7 +34,7 @@
 //! };
 //!
 //! let order_response = client.create_order(order_request)?;
-//! println!("Order created: {}", order_response.order.id);
+//! println!("Order created: {}", order_response.order_id);
 //! # Ok(())
 //! # }
 //!

@@ -20,6 +20,8 @@ fn test_order_creation_request() {
     let request = CreateOrderRequest {
         amount: 100.0,
         currency: Currency::TRY,
+        locale: Some("tr".to_string()),
+        conversation_id: Some("test-123".to_string()),
         description: Some("Test order".to_string()),
         items: vec![CreateOrderItemRequest {
             name: "Test Item".to_string(),

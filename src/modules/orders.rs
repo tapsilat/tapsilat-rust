@@ -1,8 +1,8 @@
 use crate::error::Result;
 use crate::modules::validators::Validators;
 use crate::types::{
-    ApiResponse, CreateOrderRequest, Order, OrderResponse, PaginatedResponse, PaginationParams,
-    RefundOrderRequest, RefundOrderResponse,
+    ApiResponse, CreateOrderRequest, CreateOrderResponse, Order, PaginatedResponse,
+    PaginationParams, RefundOrderRequest, RefundOrderResponse,
 };
 use std::sync::Arc;
 
@@ -16,21 +16,19 @@ impl OrderModule {
     }
 
     /// Creates a new order
-    pub fn create(&self, mut request: CreateOrderRequest) -> Result<OrderResponse> {
+    pub fn create(&self, mut request: CreateOrderRequest) -> Result<CreateOrderResponse> {
         // Validate request
         self.validate_create_order_request(&mut request)?;
 
-        let response = self.client.make_request("POST", "orders", Some(&request))?;
-        let api_response: ApiResponse<OrderResponse> = serde_json::from_value(response)?;
-
-        match api_response.data {
-            Some(order_response) => Ok(order_response),
-            None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response
-                    .message
-                    .unwrap_or("No order data in response".to_string()),
-            )),
-        }
+        let response = self
+            .client
+            .make_request("POST", "order/create", Some(&request))?;
+        serde_json::from_value(response).map_err(|e| {
+            crate::error::TapsilatError::ConfigError(format!(
+                "Failed to parse create order response: {}",
+                e
+            ))
+        })
     }
 
     /// Retrieves an order by ID

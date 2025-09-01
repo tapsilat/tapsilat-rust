@@ -55,15 +55,15 @@ impl TapsilatClient {
     }
 
     // Direct Order Operations
-    pub fn create_order(&self, request: CreateOrderRequest) -> Result<OrderResponse> {
-        let response = self.make_request("POST", "orders", Some(&request))?;
+    pub fn create_order(&self, request: CreateOrderRequest) -> Result<CreateOrderResponse> {
+        let response = self.make_request("POST", "order/create", Some(&request))?;
         serde_json::from_value(response).map_err(|e| {
             TapsilatError::ConfigError(format!("Failed to parse order response: {}", e))
         })
     }
 
     pub fn get_order(&self, order_id: &str) -> Result<OrderResponse> {
-        let endpoint = format!("orders/{}", order_id);
+        let endpoint = format!("order/get/{}", order_id);
         let response = self.make_request::<()>("GET", &endpoint, None)?;
         serde_json::from_value(response).map_err(|e| {
             TapsilatError::ConfigError(format!("Failed to parse order response: {}", e))
@@ -98,7 +98,7 @@ impl TapsilatClient {
     }
 
     pub fn get_order_list(&self, page: Option<u32>, limit: Option<u32>) -> Result<Value> {
-        let mut endpoint = "orders".to_string();
+        let mut endpoint = "order/list".to_string();
         let mut params = Vec::new();
 
         if let Some(p) = page {

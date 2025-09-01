@@ -23,7 +23,7 @@ use crate::error::{Result, TapsilatError};
 pub struct Config {
     /// API key for authenticating with the Tapsilat API.
     pub api_key: String,
-    /// Base URL for the Tapsilat API (default: <https://api.tapsilat.com/v1>).
+    /// Base URL for the Tapsilat API (default: <https://acquiring.tapsilat.dev/api/v1>).
     pub base_url: String,
     /// Request timeout in seconds (default: 30).
     pub timeout: u64,
@@ -48,7 +48,7 @@ impl Config {
     pub fn new(api_key: impl Into<String>) -> Self {
         Self {
             api_key: api_key.into(),
-            base_url: "https://api.tapsilat.com/v1".to_string(),
+            base_url: "https://acquiring.tapsilat.dev/api/v1".to_string(),
             timeout: 30,
         }
     }

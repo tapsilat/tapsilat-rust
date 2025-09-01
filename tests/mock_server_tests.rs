@@ -13,38 +13,14 @@ async fn setup_mock_server() -> ServerGuard {
 async fn test_order_creation_with_mock() {
     let mut server = setup_mock_server().await;
 
-    // Mock successful order creation
+    // Mock successful order creation (matches actual API response format)
     let mock_response = json!({
-        "success": true,
-        "data": {
-            "order": {
-                "id": "order_123",
-                "amount": 149.99,
-                "currency": "TRY",
-                "status": "pending",
-                "description": "Test Order",
-                "buyer": null,
-                "items": [
-                    {
-                        "name": "Test Item",
-                        "price": 149.99,
-                        "quantity": 1,
-                        "description": null
-                    }
-                ],
-                "callback_url": null,
-                "checkout_url": null,
-                "created_at": "2023-12-01T10:30:00Z",
-                "updated_at": "2023-12-01T10:30:00Z",
-                "metadata": null
-            },
-            "checkout_url": "https://checkout.tapsilat.com/order_123"
-        },
-        "message": "Order created successfully"
+        "order_id": "order_123",
+        "reference_id": "ref_12345"
     });
 
     let _mock = server
-        .mock("POST", "/orders")
+        .mock("POST", "/order/create")
         .with_status(201)
         .with_header("content-type", "application/json")
         .with_body(mock_response.to_string())
@@ -59,6 +35,8 @@ async fn test_order_creation_with_mock() {
     let order_request = CreateOrderRequest {
         amount: 149.99,
         currency: Currency::TRY,
+        locale: Some("tr".to_string()),
+        conversation_id: Some("test-123".to_string()),
         description: Some("Test Order".to_string()),
         items: vec![CreateOrderItemRequest {
             name: "Test Item".to_string(),
@@ -74,9 +52,9 @@ async fn test_order_creation_with_mock() {
     let result = client.orders().create(order_request);
     assert!(result.is_ok(), "Order creation should succeed with mock");
 
-    let order_response = result.unwrap();
-    assert_eq!(order_response.order.id, "order_123");
-    assert_eq!(order_response.order.amount, 149.99);
+    let create_response = result.unwrap();
+    assert_eq!(create_response.order_id, "order_123");
+    assert_eq!(create_response.reference_id, "ref_12345");
 }
 
 #[tokio::test]
@@ -197,7 +175,7 @@ async fn test_error_handling_with_mock() {
     });
 
     let _mock = server
-        .mock("POST", "/orders")
+        .mock("POST", "/order/create")
         .with_status(401)
         .with_header("content-type", "application/json")
         .with_body(mock_error_response.to_string())
@@ -211,6 +189,8 @@ async fn test_error_handling_with_mock() {
     let order_request = CreateOrderRequest {
         amount: 149.99,
         currency: Currency::TRY,
+        locale: Some("tr".to_string()),
+        conversation_id: Some("test-123".to_string()),
         description: Some("Test Order".to_string()),
         items: vec![CreateOrderItemRequest {
             name: "Test Item".to_string(),
