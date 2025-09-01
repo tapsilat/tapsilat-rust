@@ -1,7 +1,6 @@
-# Tapsilat Rust S```toml
-[dependencies]
-tapsilat = "2025.9.1"
-```<div align="center">
+# Tapsilat Rust SDK
+
+<div align="center">
 
 
 **Enterprise-grade Rust SDK for Tapsilat Payment Processing Platform**
@@ -16,12 +15,9 @@ tapsilat = "2025.9.1"
 
 ## Installation
 
-```toml
-[dependencies]
-tapsilat = "2025.9.29"
+```bash
+npm install @tapsilat/tapsilat-js
 ```
-
----
 
 ## Quick Start
 
