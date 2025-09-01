@@ -1,11 +1,7 @@
 # Tapsilat Rust SDK
 
-<div align="center">
-
 
 **Enterprise-grade Rust SDK for Tapsilat Payment Processing Platform**
-
-</div>
 
 ## About Tapsilat
 
