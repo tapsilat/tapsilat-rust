@@ -24,7 +24,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Advanced Client Configuration
     println!("=== 1. CLIENT CONFIGURATION ===");
     let config = Config::new(&api_key)
-        .with_base_url("https://acquiring.tapsilat.dev/api/v1")
+        .with_base_url("https://panel.tapsilat.dev/api/v1")
         .with_timeout(30);
 
     let client = TapsilatClient::new(config)?;
@@ -34,7 +34,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         &api_key[..8],
         &api_key[api_key.len() - 4..]
     );
-    println!("   Base URL: https://acquiring.tapsilat.dev/api/v1");
+    println!("   Base URL: https://panel.tapsilat.dev/api/v1");
     println!("   Timeout: 30s\n");
 
     // 2. Comprehensive Validator Testing

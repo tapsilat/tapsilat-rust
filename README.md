@@ -21,7 +21,7 @@ let client = TapsilatClient::from_api_key("your-bearer-token")?;
 
 // Or with advanced configuration
 let config = Config::new("your-bearer-token")
-    .with_base_url("https://acquiring.tapsilat.dev/api/v1")
+    .with_base_url("https://panel.tapsilat.dev/api/v1")
     .with_timeout(30);
 let client = TapsilatClient::new(config)?;
 ```
@@ -316,7 +316,7 @@ The SDK can be customized with various configuration options:
 use tapsilat::Config;
 
 let config = Config::new("your-bearer-token")
-    .with_base_url("https://acquiring.tapsilat.dev/api/v1")
+    .with_base_url("https://panel.tapsilat.dev/api/v1")
     .with_timeout(30); // 30 seconds
 
 let client = TapsilatClient::new(config)?;
