@@ -1,6 +1,6 @@
 [package]
 name = "tapsilat"
-version = "2025.9.1"
+version = "2025.9.2"
 edition = "2021"
 
 authors = ["Tapsilat <github@tapsilat.dev>"]
