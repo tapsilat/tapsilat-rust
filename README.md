@@ -1,6 +1,7 @@
-# Tapsilat Rust SDK
-
-<div align="center">
+# Tapsilat Rust S```toml
+[dependencies]
+tapsilat = "2025.9.1"
+```<div align="center">
 
 
 **Enterprise-grade Rust SDK for Tapsilat Payment Processing Platform**
@@ -17,7 +18,7 @@
 
 ```toml
 [dependencies]
-tapsilat = "2025.9.28"
+tapsilat = "2025.9.29"
 ```
 
 ---

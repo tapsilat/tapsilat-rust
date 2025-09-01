@@ -1064,7 +1064,7 @@ dependencies = [
 
 [[package]]
 name = "tapsilat"
-version = "2025.9.28"
+version = "2025.9.1"
 dependencies = [
  "chrono",
  "mockito",
