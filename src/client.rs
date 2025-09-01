@@ -22,10 +22,10 @@ use serde_json::Value;
 /// # fn example() -> Result<(), Box<dyn std::error::Error>> {
 /// let config = Config::new("your-api-key");
 /// let client = TapsilatClient::new(config)?;
-/// 
+///
 /// // Use direct methods
 /// // let order = client.create_order(order_request)?;
-/// 
+///
 /// // Or use modular interface
 /// // let order = client.orders().create(order_request)?;
 /// # Ok(())

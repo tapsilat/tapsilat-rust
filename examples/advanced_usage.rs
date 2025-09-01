@@ -13,7 +13,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Get API key from environment
     let api_key = env::var("TAPSILAT_API_KEY").unwrap_or_else(|_| {
-        "".to_string()
+        "eyJhbGciOiJIUzUxMiIsInR5cCI6IkpXVCJ9.eyJFbWFpbCI6InRhcHNpbGF0LXJ1c3RAYXBpLnRhcHNpbGF0ZGV2IiwiSUQiOiJiYzY4MTM3MS00ZWUxLTRkYzgtOTYyYi0zOWU2NjMxMzdkOWUiLCJPcmdhbml6YXRpb25JRCI6IjFmOTQ1ZmY3LWQwZDktNDNlNy1iOTYyLWRiOGJjMzM1YmFhYiIsIk9yZ2FuaXphdGlvbiI6IlRhcHNpbGF0REVWIiwiSXNPcmdhbml6YXRpb25Vc2VyIjp0cnVlLCJJcEFkZHJlc3MiOiIiLCJBZ2VudCI6IiIsIk9yZ1RpbWV6ZW9uZSI6IlR1cmtleSIsIklzQXBpVXNlciI6dHJ1ZSwiaXNzIjoidGFwc2lsYXQiLCJleHAiOjE3NTkzMDk0MDN9.IANlbKY_RncqbKGSwCCARPbx2yKiHTq85Gq_LFn6GexkvcwnyNfoZR6FI81tmVE-ggzikZs-dO_Xa1aBcxC4Mg".to_string()
     });
 
     println!(
