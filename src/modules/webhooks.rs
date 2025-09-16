@@ -98,11 +98,7 @@ impl WebhookModule {
             .map_err(|e| TapsilatError::InvalidResponse(format!("System time error: {}", e)))?
             .as_secs();
 
-        let time_diff = if current_time > webhook_time {
-            current_time - webhook_time
-        } else {
-            webhook_time - current_time
-        };
+        let time_diff = current_time.abs_diff(webhook_time);
 
         if time_diff > tolerance_seconds {
             return Err(TapsilatError::InvalidResponse(format!(
