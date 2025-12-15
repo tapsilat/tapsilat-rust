@@ -5,44 +5,69 @@ pub struct Buyer {
     pub id: Option<String>,
     pub name: String,
     pub surname: String,
-    pub email: String,
-    pub gsm: String,
+    pub email: Option<String>,
+    #[serde(rename = "gsm_number")]
+    pub gsm_number: Option<String>,
+    #[serde(rename = "identity_number")]
     pub identity_number: Option<String>,
-    pub address: Option<Address>,
-    pub created_at: Option<String>,
-    pub updated_at: Option<String>,
+    #[serde(rename = "last_login_date")]
+    pub last_login_date: Option<String>,
+    #[serde(rename = "registration_date")]
+    pub registration_date: Option<String>,
+    #[serde(rename = "registration_address")]
+    pub registration_address: Option<String>,
+    pub ip: Option<String>,
+    pub city: Option<String>,
+    pub country: Option<String>,
+    #[serde(rename = "zip_code")]
+    pub zip_code: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Address {
-    pub country: String,
-    pub city: String,
+    pub country: Option<String>,
+    pub city: Option<String>,
     pub district: Option<String>,
-    pub address_line_1: String,
-    pub address_line_2: Option<String>,
+    #[serde(rename = "address")]
+    pub address: Option<String>,
+    #[serde(rename = "zip_code")]
     pub postal_code: Option<String>,
+    // Python BillingAddressDTO/ShippingAddressDTO fields mapping
+    #[serde(rename = "contact_name")]
+    pub contact_name: Option<String>,
+    pub title: Option<String>,
+    #[serde(rename = "tax_office")]
+    pub tax_office: Option<String>,
+    #[serde(rename = "vat_number")]
+    pub vat_number: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateBuyerRequest {
     pub name: String,
     pub surname: String,
-    pub email: String,
-    pub phone: Option<String>,
-    #[serde(rename = "identityNumber")]
+    pub email: Option<String>,
+    #[serde(rename = "gsm_number")]
+    pub gsm_number: Option<String>,
+    #[serde(rename = "identity_number")]
     pub identity_number: Option<String>,
-    #[serde(rename = "shippingAddress")]
-    pub shipping_address: Option<CreateAddressRequest>,
-    #[serde(rename = "billingAddress")]
-    pub billing_address: Option<CreateAddressRequest>,
+    #[serde(rename = "registration_address")]
+    pub registration_address: Option<String>,
+    pub ip: Option<String>,
+    pub city: Option<String>,
+    pub country: Option<String>,
+    #[serde(rename = "zip_code")]
+    pub zip_code: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CreateAddressRequest {
-    pub country: String,
-    pub city: String,
-    pub district: Option<String>,
-    pub address_line_1: String,
-    pub address_line_2: Option<String>,
-    pub postal_code: Option<String>,
+    pub country: Option<String>,
+    pub city: Option<String>,
+    #[serde(rename = "address")]
+    pub address: Option<String>,
+    #[serde(rename = "zip_code")]
+    pub zip_code: Option<String>,
+    #[serde(rename = "contact_name")]
+    pub contact_name: Option<String>,
 }
