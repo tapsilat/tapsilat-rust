@@ -23,21 +23,45 @@
 //! // Create an order
 //! let order_request = CreateOrderRequest {
 //!     amount: 100.0,
-//!     currency: Currency::TRY,
-//!     locale: Some("tr".to_string()),
+//!     currency: "TRY".to_string(),
+//!     locale: "tr".to_string(),
 //!     conversation_id: Some("order-123".to_string()),
-//!     description: Some("Test order".to_string()),
-//!     buyer: None,
-//!     items: vec![],
-//!     callback_url: Some("https://example.com/callback".to_string()),
+//!     buyer: tapsilat::types::CreateBuyerRequest {
+//!         name: "John".to_string(),
+//!         surname: "Doe".to_string(),
+//!         email: Some("john@example.com".to_string()),
+//!         gsm_number: None, identity_number: None, registration_address: None, ip: None, city: None, country: None, zip_code: None
+//!     },
+//!     basket_items: None,
+//!     billing_address: None,
+//!     shipping_address: None,
+//!     checkout_design: None,
+//!     enabled_installments: None,
+//!     external_reference_id: None,
+//!     order_cards: None,
+//!     paid_amount: None,
+//!     partial_payment: None,
+//!     payment_failure_url: None,
+//!     payment_methods: None,
+//!     payment_mode: None,
+//!     payment_options: None,
+//!     payment_success_url: None,
+//!     payment_terms: None,
+//!     pf_sub_merchant: None,
+//!     redirect_failure_url: None,
+//!     redirect_success_url: None,
+//!     sub_organization: None,
+//!     submerchants: None,
+//!     tax_amount: None,
+//!     three_d_force: None,
 //!     metadata: None,
 //! };
 //!
 //! let order_response = client.create_order(order_request)?;
-//! println!("Order created: {}", order_response.order_id);
+//! println!("Order created: {:?}", order_response.order_id);
 //! # Ok(())
 //! # }
-//!
+//! ```
 //! ## Features
 //!
 //! - **Type Safety**: Comprehensive type definitions with validation

@@ -1,10 +1,12 @@
-use chrono;
-use serde_json::Value;
+use chrono::Utc;
+
 use std::env;
 use tapsilat::{
-    Config, CreateAddressRequest, CreateBuyerRequest, CreateInstallmentPlanRequest,
-    CreateOrderItemRequest, CreateOrderRequest, Currency, TapsilatClient, Validators,
-    WebhookModule, WebhookVerificationConfig,
+    Config, CreateBuyerRequest, CreateOrderRequest, TapsilatClient, Validators,
+    types::{
+        BasketItemDTO, SubscriptionCreateRequest, SubscriptionBilling,
+        BillingAddressDTO
+    }
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -29,336 +31,172 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     let client = TapsilatClient::new(config)?;
     println!("✅ Client configured successfully");
-    println!(
-        "   API Key: {}...{}",
-        &api_key[..8],
-        &api_key[api_key.len() - 4..]
-    );
-    println!("   Base URL: https://panel.tapsilat.dev/api/v1");
-    println!("   Timeout: 30s\n");
 
-    // 2. Comprehensive Validator Testing
-    println!("=== 2. VALIDATOR TESTING ===");
-
-    // GSM Validation Tests
-    println!("📱 GSM Number Validation:");
-    let test_gsm_numbers = vec![
-        "5551234567",
-        "+905551234567",
-        "905551234567",
-        "05551234567",
-        "invalid_gsm",
-        "4551234567", // Should fail - doesn't start with 5
-    ];
-
-    for gsm in test_gsm_numbers {
-        match Validators::validate_gsm_number(gsm) {
-            Ok(normalized) => println!("   ✅ {} → {}", gsm, normalized),
-            Err(e) => println!("   ❌ {} → Error: {}", gsm, e),
-        }
+    // 2. Validator Testing
+    println!("\n=== 2. VALIDATOR TESTING ===");
+    // GSM
+    let gsm = "5551234567";
+    match Validators::validate_gsm_number(gsm) {
+        Ok(normalized) => println!("   ✅ GSM {} → {}", gsm, normalized),
+        Err(e) => println!("   ❌ GSM {} → Error: {}", gsm, e),
     }
 
-    // Email Validation Tests
-    println!("\n📧 Email Validation:");
-    let test_emails = vec![
-        "test@tapsilat.com",
-        "user@example.org",
-        "invalid-email",
-        "@invalid.com",
-        "test@",
-    ];
-
-    for email in test_emails {
-        match Validators::validate_email(email) {
-            Ok(_) => println!("   ✅ {} → Valid", email),
-            Err(e) => println!("   ❌ {} → Error: {}", email, e),
-        }
+    // Amount
+    let amount = 10.99;
+    match Validators::validate_amount(amount) {
+        Ok(_) => println!("   ✅ Amount {} → Valid", amount),
+        Err(e) => println!("   ❌ Amount {} → Error: {}", amount, e),
     }
 
-    // Amount Validation Tests
-    println!("\n💰 Amount Validation:");
-    let test_amounts = vec![10.99, 0.01, 999.99, 0.0, -5.50, 10.555];
+    // 3. Order Creation
+    println!("\n=== 3. ORDER LIFECYCLE TESTING ===");
 
-    for amount in test_amounts {
-        match Validators::validate_amount(amount) {
-            Ok(_) => println!("   ✅ {} → Valid", amount),
-            Err(e) => println!("   ❌ {} → Error: {}", amount, e),
-        }
-    }
+    let buyer = CreateBuyerRequest {
+        name: "Ahmet".to_string(),
+        surname: "Yılmaz".to_string(),
+        email: Some("ahmet.yilmaz@gmail.com".to_string()),
+        gsm_number: Some("5321234567".to_string()),
+        identity_number: None,
+        registration_address: None,
+        ip: None,
+        city: Some("Istanbul".to_string()),
+        country: Some("Turkey".to_string()),
+        zip_code: None,
+    };
 
-    // Installment Validation Tests
-    println!("\n📊 Installment Validation:");
-    let test_installments = vec![1, 3, 6, 12, 13, 0];
+    let billing_address = BillingAddressDTO {
+        address: Some("Maslak Mah. Dereboyu Cad.".to_string()),
+        city: Some("Istanbul".to_string()),
+        country: Some("Turkey".to_string()),
+        contact_name: Some("Ahmet Yilmaz".to_string()),
+        // populate other fields as needed or leave None
+        billing_type: None, citizenship: None, contact_phone: None, district: None,
+        tax_office: None, title: None, vat_number: None, zip_code: None
+    };
 
-    for installments in test_installments {
-        match Validators::validate_installments(installments) {
-            Ok(_) => println!("   ✅ {} installments → Valid", installments),
-            Err(e) => println!("   ❌ {} installments → Error: {}", installments, e),
-        }
-    }
-    println!();
-
-    // 3. Order Creation and Lifecycle Testing
-    println!("=== 3. ORDER LIFECYCLE TESTING ===");
+    let basket_item = BasketItemDTO {
+        name: Some("Test Product".to_string()),
+        price: Some(299.99),
+        item_type: Some("PHYSICAL".to_string()), // Example
+        category1: Some("Electronics".to_string()),
+        // Initialize other Option fields to None
+        category2: None, commission_amount: None, coupon: None, coupon_discount: None,
+        data: None, id: None, paid_amount: None, payer: None, quantity: Some(1),
+        quantity_float: None, quantity_unit: None, sub_merchant_key: None, sub_merchant_price: None
+    };
 
     let order_request = CreateOrderRequest {
         amount: 299.99,
-        currency: Currency::TRY,
-        locale: Some("tr".to_string()),
-        conversation_id: Some(format!("order-{}", chrono::Utc::now().timestamp())),
-        description: Some("Test Order".to_string()),
-        buyer: Some(CreateBuyerRequest {
-            name: "Ahmet".to_string(),
-            surname: "Yılmaz".to_string(),
-            email: "ahmet.yilmaz@gmail.com".to_string(),
-            phone: Some("5321234567".to_string()),
-            identity_number: None,
-            shipping_address: None,
-            billing_address: None,
-        }),
-        items: vec![CreateOrderItemRequest {
-            name: "Test Product".to_string(),
-            price: 299.99,
-            quantity: 1,
-            description: Some("Test product description".to_string()),
-        }],
-        callback_url: None,
-        metadata: None,
+        currency: "TRY".to_string(),
+        locale: "tr".to_string(),
+        conversation_id: Some(format!("order-{}", Utc::now().timestamp())),
+        buyer: buyer.clone(),
+        basket_items: Some(vec![basket_item]),
+        billing_address: Some(billing_address),
+        shipping_address: None, // Can populate if needed
+        payment_success_url: Some("https://example.com/success".to_string()),
+        payment_failure_url: Some("https://example.com/fail".to_string()),
+        // Initialize other Option fields to None
+        checkout_design: None, enabled_installments: None, external_reference_id: None,
+        metadata: None, order_cards: None, paid_amount: None, partial_payment: None,
+        payment_methods: None, payment_mode: None, payment_options: None, payment_terms: None,
+        pf_sub_merchant: None, redirect_failure_url: None, redirect_success_url: None,
+        sub_organization: None, submerchants: None, tax_amount: None, three_d_force: None,
     };
 
-    println!("📦 Creating Order (Direct API)...");
-    println!(
-        "   Amount: {} {:?}",
-        order_request.amount, order_request.currency
-    );
-    println!("   Items: {} items", order_request.items.len());
-    println!(
-        "   Buyer: {} {}",
-        order_request.buyer.as_ref().unwrap().name,
-        order_request.buyer.as_ref().unwrap().surname
-    );
-
-    let mut created_order_id = None;
+    println!("📦 Creating Order...");
+    let mut created_reference_id = None;
 
     match client.create_order(order_request.clone()) {
         Ok(create_response) => {
-            created_order_id = Some(create_response.order_id.clone());
             println!("   ✅ Order Created Successfully!");
-            println!("      Order ID: {}", create_response.order_id);
-            println!("      Reference ID: {}", create_response.reference_id);
+            if let Some(oid) = &create_response.order_id {
+                 println!("      Order ID: {}", oid);
+            }
+            if let Some(ref_id) = &create_response.reference_id {
+                println!("      Reference ID: {}", ref_id);
+                created_reference_id = Some(ref_id.clone());
+            }
+            if let Some(url) = &create_response.checkout_url {
+                println!("      Checkout URL: {}", url);
+            }
         }
-        Err(e) => {
-            println!("   ❌ Order Creation Failed: {}", e);
-        }
+        Err(e) => println!("   ❌ Order Creation Failed: {}", e),
     }
 
-    // Test Module-based API as well
-    println!("\n📦 Creating Order (Module API)...");
-    match client.orders().create(order_request) {
-        Ok(create_response) => {
-            println!("   ✅ Module API Order Created!");
-            println!("      Order ID: {}", create_response.order_id);
-            println!("      Reference ID: {}", create_response.reference_id);
-        }
-        Err(e) => {
-            println!("   ❌ Module API Order Creation Failed: {}", e);
-        }
-    }
-
-    // 4. Order Retrieval and Status Testing
-    if let Some(order_id) = &created_order_id {
+    // 4. Order Retrieval
+    if let Some(ref_id) = &created_reference_id {
         println!("\n=== 4. ORDER RETRIEVAL TESTING ===");
-
-        // Test Direct API
-        println!("🔍 Getting Order (Direct API)...");
-        match client.get_order(order_id) {
+        match client.get_order(ref_id) {
             Ok(order) => {
-                println!("   ✅ Order Retrieved Successfully!");
-                println!("      Order ID: {}", order.order.id);
-                println!("      Status: {:?}", order.order.status);
-                println!("      Created: {}", order.order.created_at);
+                println!("   ✅ Order Retrieved!");
+                println!("      ID: {}", order.id);
+                println!("      Status: {:?}", order.status);
             }
-            Err(e) => {
-                println!("   ❌ Order Retrieval Failed: {}", e);
-            }
+            Err(e) => println!("   ❌ Order Retrieval Failed: {}", e),
         }
 
-        // Test Order Status
         println!("\n📊 Getting Order Status...");
-        match client.get_order_status(order_id) {
-            Ok(status_response) => {
-                println!("   ✅ Status Retrieved: {:?}", status_response);
-            }
-            Err(e) => {
-                println!("   ❌ Status Retrieval Failed: {}", e);
-            }
-        }
-
-        // Test Checkout URL
-        println!("\n🔗 Getting Checkout URL...");
-        match client.get_checkout_url(order_id) {
-            Ok(checkout_response) => {
-                println!("   ✅ Checkout URL Retrieved: {:?}", checkout_response);
-            }
-            Err(e) => {
-                println!("   ❌ Checkout URL Retrieval Failed: {}", e);
-            }
-        }
-
-        // Test Order Transactions
-        println!("\n💳 Getting Order Transactions...");
-        match client.get_order_transactions(order_id) {
-            Ok(transactions) => {
-                println!("   ✅ Transactions Retrieved: {:?}", transactions);
-            }
-            Err(e) => {
-                println!("   ❌ Transactions Retrieval Failed: {}", e);
-            }
+        match client.get_order_status(ref_id) {
+             Ok(status) => println!("   ✅ Status: {:?}", status),
+             Err(e) => println!("   ❌ Status Failed: {}", e),
         }
     }
 
-    // 5. Order List Testing
+    // 5. Order List
     println!("\n=== 5. ORDER LIST TESTING ===");
-    println!("📋 Getting Order List...");
-    match client.get_order_list(Some(1), Some(10)) {
-        Ok(orders_response) => {
-            println!("   ✅ Order List Retrieved!");
-            println!(
-                "      Response: {}",
-                serde_json::to_string_pretty(&orders_response)?
-            );
-        }
-        Err(e) => {
-            println!("   ❌ Order List Retrieval Failed: {}", e);
-        }
+    match client.get_order_list(1, 10, None) {
+        Ok(list) => println!("   ✅ Order List Retrieved: {:?}", list),
+        Err(e) => println!("   ❌ Order List Failed: {}", e),
     }
 
-    // 6. Installment Plan Testing
-    println!("\n=== 6. INSTALLMENT PLAN TESTING ===");
-    if let Some(order_id) = &created_order_id {
-        let installment_request = CreateInstallmentPlanRequest {
-            order_id: order_id.clone(),
-            installment_count: 12,
-            first_installment_date: "2025-10-15".to_string(),
-        };
-
-        println!("📊 Creating Installment Plan...");
-        println!("   Order ID: {}", installment_request.order_id);
-        println!("   Installments: {}", installment_request.installment_count);
-        println!(
-            "   First Payment: {}",
-            installment_request.first_installment_date
-        );
-
-        match client.installments().create_plan(installment_request) {
-            Ok(plan_response) => {
-                println!("   ✅ Installment Plan Created!");
-                println!("      Plan: {:?}", plan_response);
-            }
-            Err(e) => {
-                println!("   ❌ Installment Plan Creation Failed: {}", e);
-            }
-        }
-    }
-
-    // 7. Webhook Testing
-    println!("\n=== 7. WEBHOOK VERIFICATION TESTING ===");
-    let webhook_payload = r#"{
-        "event_type": "order.completed",
-        "data": {
-            "order_id": "test_order_123",
-            "amount": 299.99,
-            "currency": "TRY",
-            "status": "completed",
-            "payment_method": "credit_card"
-        },
-        "timestamp": "2024-01-15T10:30:00Z"
-    }"#;
-
-    let webhook_signature = "sha256=test_signature_hash";
-    let webhook_secret = "test_webhook_secret_key";
-
-    println!("🔗 Testing Webhook Verification...");
-
-    // Test simple verification
-    match WebhookModule::verify_webhook(webhook_payload, webhook_signature, webhook_secret) {
-        Ok(is_valid) => {
-            if is_valid {
-                println!("   ✅ Simple webhook verification passed");
-            } else {
-                println!("   ⚠️ Simple webhook verification failed (expected for test data)");
-            }
-        }
-        Err(e) => {
-            println!("   ❌ Simple webhook verification error: {}", e);
-        }
-    }
-
-    // Test advanced verification
-    let webhook_config = WebhookVerificationConfig {
-        secret: webhook_secret.to_string(),
-        tolerance_seconds: Some(300),
+    // 6. Subscriptions (NEW)
+    println!("\n=== 6. SUBSCRIPTION TESTING ===");
+    let sub_request = SubscriptionCreateRequest {
+        amount: Some(100.0),
+        currency: Some("TRY".to_string()),
+        period: Some(1), // Monthly?
+        title: Some("Test Subscription".to_string()),
+        billing: Some(SubscriptionBilling {
+            contact_name: Some("Sub Subscriber".to_string()),
+            city: Some("Istanbul".to_string()),
+            country: Some("TR".to_string()),
+            address: None, vat_number: None, zip_code: None
+        }),
+        // Initialize others to None
+        card_id: None, cycle: None, external_reference_id: Some("ext_sub_01".to_string()),
+        failure_url: None, payment_date: None, success_url: None,
     };
 
-    match WebhookModule::verify_webhook_advanced(
-        webhook_payload,
-        webhook_signature,
-        &webhook_config,
-    ) {
-        Ok(result) => {
-            println!("   ℹ️ Advanced verification result:");
-            println!("      Valid: {}", result.is_valid);
-            if let Some(error) = result.error {
-                println!("      Error: {}", error);
-            }
+    match client.create_subscription(sub_request) {
+        Ok(sub_resp) => {
+            println!("   ✅ Subscription Created!");
+            println!("      Ref ID: {:?}", sub_resp.reference_id);
+            
+            // List Subscriptions
+             match client.list_subscriptions(1, 5) {
+                 Ok(list) => println!("   ✅ Subscriptions List: {:?}", list),
+                 Err(e) => println!("   ❌ List Subscriptions Failed: {}", e),
+             }
         }
-        Err(e) => {
-            println!("   ❌ Advanced webhook verification error: {}", e);
-        }
+        Err(e) => println!("   ❌ Subscription Creation Failed: {}", e),
     }
 
-    // Test webhook parsing
-    match WebhookModule::parse_webhook(webhook_payload) {
-        Ok(webhook_event) => {
-            println!("   ✅ Webhook parsing successful!");
-            println!("      Event Type: {:?}", webhook_event.event_type);
-            println!("      Timestamp: {}", webhook_event.timestamp);
-            if let Some(order_id) = webhook_event.data.order_id {
-                println!("      Order ID: {}", order_id);
-            }
-        }
-        Err(e) => {
-            println!("   ❌ Webhook parsing error: {}", e);
-        }
+    // 7. Term Management (Terminating a term)
+    println!("\n=== 7. TERM MANAGEMENT (Termination) ===");
+    // Attempting on a dummy term ID, expected to fail or 404, but tests the method signature
+    match client.terminate_order_term("non_existent_term_id", Some("Test Reason".to_string())) {
+        Ok(resp) => println!("   ✅ Term Terminated (Unexpected success for dummy ID): {:?}", resp),
+        Err(e) => println!("   ✅ Term Termination Failed as expected (dummy ID): {}", e),
     }
 
-    // 8. Error Handling Testing
-    println!("\n=== 8. ERROR HANDLING TESTING ===");
-    println!("🚨 Testing Error Scenarios...");
-
-    // Test invalid order ID
-    match client.get_order("invalid-order-id-12345") {
-        Ok(_) => println!("   ⚠️ Unexpected success with invalid order ID"),
-        Err(e) => println!("   ✅ Invalid order ID handled correctly: {}", e),
+    // 8. API Health
+    println!("\n=== 8. HEALTH CHECK ===");
+    match client.health_check() {
+        Ok(h) => println!("   ✅ Health: {:?}", h),
+        Err(e) => println!("   ❌ Health Check Failed: {}", e),
     }
 
-    // 9. Performance Summary
-    println!("\n=== 9. TESTING SUMMARY ===");
-    println!("🎯 SDK Features Tested:");
-    println!("   ✅ Client Configuration & Initialization");
-    println!("   ✅ Comprehensive Validator Functions");
-    println!("   ✅ Direct API Methods (client.create_order, etc.)");
-    println!("   ✅ Module API Methods (client.orders().create, etc.)");
-    println!("   ✅ Order Lifecycle (Create → Get → Status → Transactions)");
-    println!("   ✅ Order List Retrieval with Pagination");
-    println!("   ✅ Installment Plan Creation");
-    println!("   ✅ Webhook Verification & Parsing");
-    println!("   ✅ Error Handling & Edge Cases");
-
-    println!("\n🚀 API testing completed!");
-    println!("   Check the responses above for actual API behavior");
-
-    println!("\n🎉 Comprehensive SDK testing completed successfully!");
-
+    println!("\n🎉 Advanced usage test completed!");
     Ok(())
 }
