@@ -100,6 +100,7 @@ pub struct SubscriptionCreateRequest {
     #[serde(rename = "success_url")]
     pub success_url: Option<String>,
     pub title: Option<String>,
+    pub user: Option<SubscriptionUser>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

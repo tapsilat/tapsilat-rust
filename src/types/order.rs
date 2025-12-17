@@ -2,19 +2,36 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+
 pub struct Order {
-    pub id: String,
-    pub amount: f64,
-    pub currency: Currency,
-    pub status: OrderStatus,
+    pub id: Option<String>,
+    #[serde(default)] // Handle missing id if needed, or Option
+    pub reference_id: Option<String>,
+    
+    // Amount fields are strings in JSON logs
+    pub amount: Option<String>, 
+    pub total: Option<String>,
+    pub paid_amount: Option<String>,
+    pub refunded_amount: Option<String>,
+    
+    pub currency: Option<String>, // Relaxed from enum to avoid validation errors
+    
+    pub status: Option<i32>, // Status is int in logs
+    pub status_enum: Option<String>,
+    
     pub description: Option<String>,
     pub buyer: Option<Buyer>,
-    pub items: Vec<OrderItem>,
+    pub items: Option<Vec<OrderItem>>, // Items missing in top level? JSON has basket_items?
+    
+    // JSON has basket_items, not items!
+    #[serde(rename = "basket_items")]
+    pub basket_items: Option<Vec<BasketItemDTO>>,
+    
     pub callback_url: Option<String>,
     pub checkout_url: Option<String>,
-    pub created_at: String,
-    pub updated_at: String,
-    pub metadata: Option<HashMap<String, serde_json::Value>>,
+    pub created_at: Option<String>,
+    pub updated_at: Option<String>,
+    pub metadata: Option<Vec<MetadataDTO>>, // JSON metadata is array of key/value
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -69,7 +86,7 @@ pub struct CreateOrderRequest {
     pub checkout_design: Option<CheckoutDesignDTO>,
     #[serde(rename = "conversation_id")]
     pub conversation_id: Option<String>,
-    #[serde(rename = "enabled_installments")]
+    #[serde(rename = "enabled_installments", skip_serializing_if = "Option::is_none")]
     pub enabled_installments: Option<Vec<i32>>,
     #[serde(rename = "external_reference_id")]
     pub external_reference_id: Option<String>,
