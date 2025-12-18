@@ -16,7 +16,7 @@
 //! # async fn example() -> Result<(), Box<dyn std::error::Error>> {
 //! // Initialize the client
 //! let config = Config::new("your-api-key")
-//!     .with_base_url("https://api.tapsilat.com/v1")
+//!     .with_base_url("https://panel.tapsilat.dev/api/v1")
 //!     .with_timeout(30);
 //! let client = TapsilatClient::new(config)?;
 //!

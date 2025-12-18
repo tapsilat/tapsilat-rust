@@ -19,7 +19,7 @@ fn skip_if_no_api_key() -> Option<String> {
 
 fn get_test_client(api_key: &str) -> TapsilatClient {
     let config = Config::new(api_key)
-        .with_base_url("https://api-sandbox.tapsilat.com") // Use sandbox for testing
+        .with_base_url("https://panel.tapsilat.dev/api/v1") // Use sandbox for testing
         .with_timeout(30);
 
     TapsilatClient::new(config).expect("Failed to create test client")
