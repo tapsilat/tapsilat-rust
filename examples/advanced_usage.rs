@@ -5,7 +5,7 @@ use tapsilat::{
     Config, CreateBuyerRequest, CreateOrderRequest, TapsilatClient, Validators,
     types::{
         BasketItemDTO, SubscriptionCreateRequest, SubscriptionBilling,
-        BillingAddressDTO
+        SubscriptionUser, BillingAddressDTO
     }
 };
 
@@ -130,7 +130,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         match client.get_order(ref_id) {
             Ok(order) => {
                 println!("   ✅ Order Retrieved!");
-                println!("      ID: {}", order.id);
+                println!("      ID: {}", order.id.unwrap_or_default());
                 println!("      Status: {:?}", order.status);
             }
             Err(e) => println!("   ❌ Order Retrieval Failed: {}", e),
@@ -162,6 +162,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             city: Some("Istanbul".to_string()),
             country: Some("TR".to_string()),
             address: None, vat_number: None, zip_code: None
+        }),
+        user: Some(SubscriptionUser {
+            first_name: Some("Ahmet".to_string()),
+            last_name: Some("Yılmaz".to_string()),
+            email: Some("ahmet.yilmaz@gmail.com".to_string()),
+            phone: Some("5321234567".to_string()),
+            city: Some("Istanbul".to_string()),
+            country: Some("Turkey".to_string()),
+            address: None, id: None, identity_number: None, zip_code: None
         }),
         // Initialize others to None
         card_id: None, cycle: None, external_reference_id: Some("ext_sub_01".to_string()),

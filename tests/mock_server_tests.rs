@@ -93,9 +93,10 @@ async fn test_order_get_with_mock() {
         "success": true,
         "data": {
             "id": "order_123",
-            "amount": 299.99,
+            "amount": "299.99",
             "currency": "TRY",
-            "status": "completed",
+            "status": 1,
+            "status_enum": "completed",
             "description": "Test order",
             "buyer": null,
             "items": [
@@ -130,8 +131,8 @@ async fn test_order_get_with_mock() {
     assert!(result.is_ok(), "Order get should succeed with mock");
 
     let order = result.unwrap();
-    assert_eq!(order.id, "order_123");
-    assert_eq!(order.amount, 299.99);
+    assert_eq!(order.id, Some("order_123".to_string()));
+    assert_eq!(order.amount, Some("299.99".to_string()));
 }
 
 #[tokio::test]
