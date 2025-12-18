@@ -1,4 +1,4 @@
-use tapsilat::{Config, CreateOrderItemRequest, CreateOrderRequest, Currency, TapsilatClient};
+use tapsilat::{Config, CreateOrderRequest, TapsilatClient};
 
 #[test]
 fn test_client_creation() {
@@ -19,25 +19,55 @@ fn test_config_validation() {
 fn test_order_creation_request() {
     let request = CreateOrderRequest {
         amount: 100.0,
-        currency: Currency::TRY,
-        locale: Some("tr".to_string()),
+        currency: "TRY".to_string(),
+        locale: "tr".to_string(),
         conversation_id: Some("test-123".to_string()),
-        description: Some("Test order".to_string()),
-        items: vec![CreateOrderItemRequest {
-            name: "Test Item".to_string(),
-            price: 100.0,
-            quantity: 1,
-            description: None,
-        }],
-        buyer: None,
-        callback_url: None,
+        basket_items: Some(vec![tapsilat::types::BasketItemDTO {
+            id: Some("item1".to_string()),
+            name: Some("Test Item".to_string()),
+            price: Some(100.0),
+            quantity: Some(1),
+            item_type: Some("PHYSICAL".to_string()),
+             category1: None, category2: None, commission_amount: None, coupon: None, coupon_discount: None, data: None, paid_amount: None, payer: None, quantity_float: None, quantity_unit: None, sub_merchant_key: None, sub_merchant_price: None
+        }]),
+        buyer: tapsilat::types::CreateBuyerRequest {
+            name: "John".to_string(),
+            surname: "Doe".to_string(),
+            email: Some("john@example.com".to_string()),
+            gsm_number: Some("+905551234567".to_string()),
+            identity_number: Some("11111111111".to_string()),
+            registration_address: Some("Address line".to_string()),
+             ip: None, city: None, country: None, zip_code: None
+        },
         metadata: None,
+        billing_address: None,
+        shipping_address: None,
+        checkout_design: None,
+        enabled_installments: None,
+        external_reference_id: None,
+        order_cards: None,
+        paid_amount: None,
+        partial_payment: None,
+        payment_failure_url: None,
+        payment_methods: None,
+        payment_mode: None,
+        payment_options: None,
+        payment_success_url: None,
+        payment_terms: None,
+        pf_sub_merchant: None,
+        redirect_failure_url: None,
+        redirect_success_url: None,
+        sub_organization: None,
+        submerchants: None,
+        tax_amount: None,
+        three_d_force: None,
     };
 
     // Should be valid
     assert_eq!(request.amount, 100.0);
-    assert!(matches!(request.currency, Currency::TRY));
-    assert_eq!(request.items.len(), 1);
+    assert_eq!(request.currency, "TRY".to_string());
+    assert!(request.basket_items.is_some());
+    assert_eq!(request.basket_items.unwrap().len(), 1);
 }
 
 #[test]

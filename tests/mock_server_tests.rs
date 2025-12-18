@@ -1,8 +1,7 @@
 use mockito::{Server, ServerGuard};
 use serde_json::json;
 use tapsilat::{
-    Config, CreateInstallmentPlanRequest, CreateOrderItemRequest, CreateOrderRequest, Currency,
-    RefundOrderRequest, TapsilatClient,
+    Config, CreateInstallmentPlanRequest, CreateOrderRequest, RefundOrderRequest, TapsilatClient,
 };
 
 async fn setup_mock_server() -> ServerGuard {
@@ -34,27 +33,56 @@ async fn test_order_creation_with_mock() {
 
     let order_request = CreateOrderRequest {
         amount: 149.99,
-        currency: Currency::TRY,
-        locale: Some("tr".to_string()),
+        currency: "TRY".to_string(),
+        locale: "tr".to_string(),
         conversation_id: Some("test-123".to_string()),
-        description: Some("Test Order".to_string()),
-        items: vec![CreateOrderItemRequest {
-            name: "Test Item".to_string(),
-            price: 149.99,
-            quantity: 1,
-            description: None,
-        }],
-        buyer: None,
-        callback_url: None,
+        basket_items: Some(vec![tapsilat::types::BasketItemDTO {
+            id: Some("item1".to_string()),
+            name: Some("Test Item".to_string()),
+            price: Some(149.99),
+            quantity: Some(1),
+            item_type: Some("PHYSICAL".to_string()),
+             category1: None, category2: None, commission_amount: None, coupon: None, coupon_discount: None, data: None, paid_amount: None, payer: None, quantity_float: None, quantity_unit: None, sub_merchant_key: None, sub_merchant_price: None
+        }]),
+        buyer: tapsilat::types::CreateBuyerRequest {
+            name: "John".to_string(),
+            surname: "Doe".to_string(),
+            email: Some("john@example.com".to_string()),
+            gsm_number: Some("+905551234567".to_string()),
+            identity_number: Some("11111111111".to_string()),
+            registration_address: Some("Address line".to_string()),
+             ip: None, city: None, country: None, zip_code: None
+        },
         metadata: None,
+        billing_address: None,
+        shipping_address: None,
+        checkout_design: None,
+        enabled_installments: None,
+        external_reference_id: None,
+        order_cards: None,
+        paid_amount: None,
+        partial_payment: None,
+        payment_failure_url: None,
+        payment_methods: None,
+        payment_mode: None,
+        payment_options: None,
+        payment_success_url: None,
+        payment_terms: None,
+        pf_sub_merchant: None,
+        redirect_failure_url: None,
+        redirect_success_url: None,
+        sub_organization: None,
+        submerchants: None,
+        tax_amount: None,
+        three_d_force: None,
     };
 
     let result = client.orders().create(order_request);
     assert!(result.is_ok(), "Order creation should succeed with mock");
 
     let create_response = result.unwrap();
-    assert_eq!(create_response.order_id, "order_123");
-    assert_eq!(create_response.reference_id, "ref_12345");
+    assert_eq!(create_response.order_id, Some("order_123".to_string()));
+    assert_eq!(create_response.reference_id, Some("ref_12345".to_string()));
 }
 
 #[tokio::test]
@@ -65,9 +93,10 @@ async fn test_order_get_with_mock() {
         "success": true,
         "data": {
             "id": "order_123",
-            "amount": 299.99,
+            "amount": "299.99",
             "currency": "TRY",
-            "status": "completed",
+            "status": 1,
+            "status_enum": "completed",
             "description": "Test order",
             "buyer": null,
             "items": [
@@ -87,7 +116,7 @@ async fn test_order_get_with_mock() {
     });
 
     let _mock = server
-        .mock("GET", "/orders/order_123")
+        .mock("GET", "/order/order_123")
         .with_status(200)
         .with_header("content-type", "application/json")
         .with_body(mock_response.to_string())
@@ -102,8 +131,8 @@ async fn test_order_get_with_mock() {
     assert!(result.is_ok(), "Order get should succeed with mock");
 
     let order = result.unwrap();
-    assert_eq!(order.id, "order_123");
-    assert_eq!(order.amount, 299.99);
+    assert_eq!(order.id, Some("order_123".to_string()));
+    assert_eq!(order.amount, Some("299.99".to_string()));
 }
 
 #[tokio::test]
@@ -188,19 +217,48 @@ async fn test_error_handling_with_mock() {
 
     let order_request = CreateOrderRequest {
         amount: 149.99,
-        currency: Currency::TRY,
-        locale: Some("tr".to_string()),
+        currency: "TRY".to_string(),
+        locale: "tr".to_string(),
         conversation_id: Some("test-123".to_string()),
-        description: Some("Test Order".to_string()),
-        items: vec![CreateOrderItemRequest {
-            name: "Test Item".to_string(),
-            price: 149.99,
-            quantity: 1,
-            description: None,
-        }],
-        buyer: None,
-        callback_url: None,
+        basket_items: Some(vec![tapsilat::types::BasketItemDTO {
+            id: Some("item1".to_string()),
+             name: Some("Test Item".to_string()),
+            price: Some(149.99),
+            quantity: Some(1),
+            item_type: Some("PHYSICAL".to_string()),
+             category1: None, category2: None, commission_amount: None, coupon: None, coupon_discount: None, data: None, paid_amount: None, payer: None, quantity_float: None, quantity_unit: None, sub_merchant_key: None, sub_merchant_price: None
+        }]),
+        buyer: tapsilat::types::CreateBuyerRequest {
+             name: "John".to_string(),
+            surname: "Doe".to_string(),
+            email: Some("john@example.com".to_string()),
+            gsm_number: Some("+905551234567".to_string()),
+            identity_number: Some("11111111111".to_string()),
+            registration_address: Some("Address line".to_string()),
+             ip: None, city: None, country: None, zip_code: None
+        },
         metadata: None,
+        billing_address: None,
+        shipping_address: None,
+        checkout_design: None,
+        enabled_installments: None,
+        external_reference_id: None,
+        order_cards: None,
+        paid_amount: None,
+        partial_payment: None,
+        payment_failure_url: None,
+        payment_methods: None,
+        payment_mode: None,
+        payment_options: None,
+        payment_success_url: None,
+        payment_terms: None,
+        pf_sub_merchant: None,
+        redirect_failure_url: None,
+        redirect_success_url: None,
+        sub_organization: None,
+        submerchants: None,
+        tax_amount: None,
+        three_d_force: None,
     };
 
     let result = client.orders().create(order_request);
@@ -234,7 +292,7 @@ async fn test_order_refund_with_mock() {
     });
 
     let _mock = server
-        .mock("POST", "/orders/order_123/refund")
+        .mock("POST", "/order/refund")
         .with_status(200)
         .with_header("content-type", "application/json")
         .with_body(mock_response.to_string())
@@ -246,16 +304,24 @@ async fn test_order_refund_with_mock() {
     let client = TapsilatClient::new(config).unwrap();
 
     let refund_request = RefundOrderRequest {
-        amount: Some(50.0),
-        reason: Some("Customer request".to_string()),
+        amount: 50.0,
+        reference_id: "order_123".to_string(), // In struct, this field exists
+        order_item_id: None,
+        order_item_payment_id: None,
     };
 
-    let result = client.orders().refund("order_123", refund_request);
+    // The method seems to be taking just the request object in source, so we match that.
+    // However, the test was mocking /orders/order_123/refund which implies path param.
+    // If the SDK implementation relies on request.reference_id, let's see.
+    // The previous error said "this method takes 1 argument but 2 arguments were supplied".
+    // So `client.orders().refund(request)` is checking out.
+    let result = client.orders().refund(refund_request);
     assert!(result.is_ok(), "Order refund should succeed with mock");
 
-    let refund = result.unwrap();
-    assert_eq!(refund.refund_id, "refund_789");
-    assert_eq!(refund.refund_amount, 50.0);
+    let refund_val = result.unwrap();
+    // refund_val is serde_json::Value
+    assert_eq!(refund_val["refund_id"], "refund_789");
+    assert_eq!(refund_val["refund_amount"], 50.0);
 }
 
 #[tokio::test]

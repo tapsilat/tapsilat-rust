@@ -3,8 +3,7 @@
 
 use std::env;
 use tapsilat::{
-    Config, CreateInstallmentPlanRequest, CreateOrderItemRequest, CreateOrderRequest, Currency,
-    TapsilatClient, Validators,
+    Config, CreateInstallmentPlanRequest, CreateOrderRequest, TapsilatClient, Validators,
 };
 
 fn skip_if_no_api_key() -> Option<String> {
@@ -20,7 +19,7 @@ fn skip_if_no_api_key() -> Option<String> {
 
 fn get_test_client(api_key: &str) -> TapsilatClient {
     let config = Config::new(api_key)
-        .with_base_url("https://api-sandbox.tapsilat.com") // Use sandbox for testing
+        .with_base_url("https://panel.tapsilat.dev/api/v1") // Use sandbox for testing
         .with_timeout(30);
 
     TapsilatClient::new(config).expect("Failed to create test client")
@@ -51,32 +50,61 @@ fn test_real_api_order_validation() {
         // Test order request creation and validation
         let order_request = CreateOrderRequest {
             amount: 149.99,
-            currency: Currency::TRY,
-            locale: Some("tr".to_string()),
+            currency: "TRY".to_string(),
+            locale: "tr".to_string(),
             conversation_id: Some("test-123".to_string()),
-            description: Some("Test Order from Rust SDK".to_string()),
-            items: vec![CreateOrderItemRequest {
-                name: "Premium Package".to_string(),
-                price: 149.99,
-                quantity: 1,
-                description: Some("Monthly subscription".to_string()),
-            }],
-            buyer: None,
-            callback_url: Some("https://your-site.com/webhook".to_string()),
+            basket_items: Some(vec![tapsilat::types::BasketItemDTO {
+                id: Some("item1".to_string()),
+                name: Some("Premium Package".to_string()),
+                price: Some(149.99),
+                quantity: Some(1),
+                item_type: Some("PHYSICAL".to_string()),
+                 category1: None, category2: None, commission_amount: None, coupon: None, coupon_discount: None, data: None, paid_amount: None, payer: None, quantity_float: None, quantity_unit: None, sub_merchant_key: None, sub_merchant_price: None
+            }]),
+            buyer: tapsilat::types::CreateBuyerRequest {
+                name: "John".to_string(),
+                surname: "Doe".to_string(),
+                email: Some("john@example.com".to_string()),
+                gsm_number: Some("+905551234567".to_string()),
+                identity_number: Some("11111111111".to_string()),
+                registration_address: Some("Address line".to_string()),
+                 ip: None, city: None, country: None, zip_code: None
+            },
             metadata: None,
+            billing_address: None,
+            shipping_address: None,
+            checkout_design: None,
+            enabled_installments: None,
+            external_reference_id: None,
+            order_cards: None,
+            paid_amount: None,
+            partial_payment: None,
+            payment_failure_url: None,
+            payment_methods: None,
+            payment_mode: None,
+            payment_options: None,
+            payment_success_url: None,
+            payment_terms: None,
+            pf_sub_merchant: None,
+            redirect_failure_url: None,
+            redirect_success_url: None,
+            sub_organization: None,
+            submerchants: None,
+            tax_amount: None,
+            three_d_force: None,
         };
 
         // Validate the order request structure
         assert_eq!(order_request.amount, 149.99);
-        assert_eq!(order_request.items.len(), 1);
-        assert_eq!(order_request.items[0].name, "Premium Package");
+        assert_eq!(order_request.basket_items.as_ref().unwrap().len(), 1);
+        assert_eq!(order_request.basket_items.as_ref().unwrap()[0].name, Some("Premium Package".to_string()));
 
         println!("✅ Order request validation successful");
         println!(
             "   Amount: {} {:?}",
             order_request.amount, order_request.currency
         );
-        println!("   Items: {} item(s)", order_request.items.len());
+        println!("   Items: {} item(s)", order_request.basket_items.as_ref().unwrap().len());
 
         // Note: Actual API call would be:
         // let result = client.orders().create(order_request);
@@ -121,27 +149,56 @@ fn test_real_api_live_order_creation() {
 
         let order_request = CreateOrderRequest {
             amount: 1.0, // Small amount for testing
-            currency: Currency::TRY,
-            locale: Some("tr".to_string()),
+            currency: "TRY".to_string(),
+            locale: "tr".to_string(),
             conversation_id: Some("test-live-123".to_string()),
-            description: Some("Rust SDK Live Test Order".to_string()),
-            items: vec![CreateOrderItemRequest {
-                name: "Test Item".to_string(),
-                price: 1.0,
-                quantity: 1,
-                description: Some("SDK test item".to_string()),
-            }],
-            buyer: None,
-            callback_url: None,
+            basket_items: Some(vec![tapsilat::types::BasketItemDTO {
+                id: Some("item1".to_string()),
+                name: Some("Test Item".to_string()),
+                price: Some(1.0),
+                quantity: Some(1),
+                item_type: Some("PHYSICAL".to_string()),
+                 category1: None, category2: None, commission_amount: None, coupon: None, coupon_discount: None, data: None, paid_amount: None, payer: None, quantity_float: None, quantity_unit: None, sub_merchant_key: None, sub_merchant_price: None
+            }]),
+            buyer: tapsilat::types::CreateBuyerRequest {
+                name: "John".to_string(),
+                surname: "Doe".to_string(),
+                email: Some("john@example.com".to_string()),
+                gsm_number: Some("+905551234567".to_string()),
+                identity_number: Some("11111111111".to_string()),
+                registration_address: Some("Address line".to_string()),
+                 ip: None, city: None, country: None, zip_code: None
+            },
             metadata: None,
+            billing_address: None,
+            shipping_address: None,
+            checkout_design: None,
+            enabled_installments: None,
+            external_reference_id: None,
+            order_cards: None,
+            paid_amount: None,
+            partial_payment: None,
+            payment_failure_url: None,
+            payment_methods: None,
+            payment_mode: None,
+            payment_options: None,
+            payment_success_url: None,
+            payment_terms: None,
+            pf_sub_merchant: None,
+            redirect_failure_url: None,
+            redirect_success_url: None,
+            sub_organization: None,
+            submerchants: None,
+            tax_amount: None,
+            three_d_force: None,
         };
 
         // This would make a real API call
         match client.orders().create(order_request) {
             Ok(response) => {
                 println!("✅ Live API test successful!");
-                println!("   Order ID: {}", response.order_id);
-                println!("   Reference ID: {}", response.reference_id);
+                println!("   Order ID: {:?}", response.order_id);
+                println!("   Reference ID: {:?}", response.reference_id);
             }
             Err(e) => {
                 println!("❌ Live API test failed: {:?}", e);

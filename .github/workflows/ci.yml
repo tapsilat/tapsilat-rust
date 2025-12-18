@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
@@ -36,7 +36,7 @@ jobs:
         
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
@@ -44,7 +44,7 @@ jobs:
         toolchain: ${{ matrix.rust }}
         
     - name: Cache cargo registry
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: |
           ~/.cargo/registry
@@ -67,7 +67,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
@@ -86,7 +86,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - name: Checkout code
-      uses: actions/checkout@v5
+      uses: actions/checkout@v6
       
     - name: Install Rust toolchain
       uses: dtolnay/rust-toolchain@stable
@@ -99,7 +99,7 @@ jobs:
     name: Security Audit
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Security audit
       uses: rustsec/audit-check@v2.0.0
       with:
