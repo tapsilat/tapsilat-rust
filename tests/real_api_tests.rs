@@ -59,7 +59,18 @@ fn test_real_api_order_validation() {
                 price: Some(149.99),
                 quantity: Some(1),
                 item_type: Some("PHYSICAL".to_string()),
-                 category1: None, category2: None, commission_amount: None, coupon: None, coupon_discount: None, data: None, paid_amount: None, payer: None, quantity_float: None, quantity_unit: None, sub_merchant_key: None, sub_merchant_price: None
+                category1: None,
+                category2: None,
+                commission_amount: None,
+                coupon: None,
+                coupon_discount: None,
+                data: None,
+                paid_amount: None,
+                payer: None,
+                quantity_float: None,
+                quantity_unit: None,
+                sub_merchant_key: None,
+                sub_merchant_price: None,
             }]),
             buyer: tapsilat::types::CreateBuyerRequest {
                 name: "John".to_string(),
@@ -68,7 +79,10 @@ fn test_real_api_order_validation() {
                 gsm_number: Some("+905551234567".to_string()),
                 identity_number: Some("11111111111".to_string()),
                 registration_address: Some("Address line".to_string()),
-                 ip: None, city: None, country: None, zip_code: None
+                ip: None,
+                city: None,
+                country: None,
+                zip_code: None,
             },
             metadata: None,
             billing_address: None,
@@ -97,14 +111,20 @@ fn test_real_api_order_validation() {
         // Validate the order request structure
         assert_eq!(order_request.amount, 149.99);
         assert_eq!(order_request.basket_items.as_ref().unwrap().len(), 1);
-        assert_eq!(order_request.basket_items.as_ref().unwrap()[0].name, Some("Premium Package".to_string()));
+        assert_eq!(
+            order_request.basket_items.as_ref().unwrap()[0].name,
+            Some("Premium Package".to_string())
+        );
 
         println!("✅ Order request validation successful");
         println!(
             "   Amount: {} {:?}",
             order_request.amount, order_request.currency
         );
-        println!("   Items: {} item(s)", order_request.basket_items.as_ref().unwrap().len());
+        println!(
+            "   Items: {} item(s)",
+            order_request.basket_items.as_ref().unwrap().len()
+        );
 
         // Note: Actual API call would be:
         // let result = client.orders().create(order_request);
@@ -158,7 +178,18 @@ fn test_real_api_live_order_creation() {
                 price: Some(1.0),
                 quantity: Some(1),
                 item_type: Some("PHYSICAL".to_string()),
-                 category1: None, category2: None, commission_amount: None, coupon: None, coupon_discount: None, data: None, paid_amount: None, payer: None, quantity_float: None, quantity_unit: None, sub_merchant_key: None, sub_merchant_price: None
+                category1: None,
+                category2: None,
+                commission_amount: None,
+                coupon: None,
+                coupon_discount: None,
+                data: None,
+                paid_amount: None,
+                payer: None,
+                quantity_float: None,
+                quantity_unit: None,
+                sub_merchant_key: None,
+                sub_merchant_price: None,
             }]),
             buyer: tapsilat::types::CreateBuyerRequest {
                 name: "John".to_string(),
@@ -167,7 +198,10 @@ fn test_real_api_live_order_creation() {
                 gsm_number: Some("+905551234567".to_string()),
                 identity_number: Some("11111111111".to_string()),
                 registration_address: Some("Address line".to_string()),
-                 ip: None, city: None, country: None, zip_code: None
+                ip: None,
+                city: None,
+                country: None,
+                zip_code: None,
             },
             metadata: None,
             billing_address: None,

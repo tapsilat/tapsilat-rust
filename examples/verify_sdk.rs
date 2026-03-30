@@ -1,7 +1,6 @@
 use std::env;
 use tapsilat::TapsilatClient;
 
-
 fn main() -> Result<(), Box<dyn std::error::Error>> {
     // 1. Initialize Client
     let api_key = env::var("TAPSILAT_API_KEY").expect("TAPSILAT_API_KEY must be set");

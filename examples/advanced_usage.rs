@@ -2,11 +2,11 @@ use chrono::Utc;
 
 use std::env;
 use tapsilat::{
-    Config, CreateBuyerRequest, CreateOrderRequest, TapsilatClient, Validators,
     types::{
-        BasketItemDTO, SubscriptionCreateRequest, SubscriptionBilling,
-        SubscriptionUser, BillingAddressDTO
-    }
+        BasketItemDTO, BillingAddressDTO, SubscriptionBilling, SubscriptionCreateRequest,
+        SubscriptionUser,
+    },
+    Config, CreateBuyerRequest, CreateOrderRequest, TapsilatClient, Validators,
 };
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
@@ -70,8 +70,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         country: Some("Turkey".to_string()),
         contact_name: Some("Ahmet Yilmaz".to_string()),
         // populate other fields as needed or leave None
-        billing_type: None, citizenship: None, contact_phone: None, district: None,
-        tax_office: None, title: None, vat_number: None, zip_code: None
+        billing_type: None,
+        citizenship: None,
+        contact_phone: None,
+        district: None,
+        tax_office: None,
+        title: None,
+        vat_number: None,
+        zip_code: None,
     };
 
     let basket_item = BasketItemDTO {
@@ -80,9 +86,19 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         item_type: Some("PHYSICAL".to_string()), // Example
         category1: Some("Electronics".to_string()),
         // Initialize other Option fields to None
-        category2: None, commission_amount: None, coupon: None, coupon_discount: None,
-        data: None, id: None, paid_amount: None, payer: None, quantity: Some(1),
-        quantity_float: None, quantity_unit: None, sub_merchant_key: None, sub_merchant_price: None
+        category2: None,
+        commission_amount: None,
+        coupon: None,
+        coupon_discount: None,
+        data: None,
+        id: None,
+        paid_amount: None,
+        payer: None,
+        quantity: Some(1),
+        quantity_float: None,
+        quantity_unit: None,
+        sub_merchant_key: None,
+        sub_merchant_price: None,
     };
 
     let order_request = CreateOrderRequest {
@@ -97,11 +113,24 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         payment_success_url: Some("https://example.com/success".to_string()),
         payment_failure_url: Some("https://example.com/fail".to_string()),
         // Initialize other Option fields to None
-        checkout_design: None, enabled_installments: None, external_reference_id: None,
-        metadata: None, order_cards: None, paid_amount: None, partial_payment: None,
-        payment_methods: None, payment_mode: None, payment_options: None, payment_terms: None,
-        pf_sub_merchant: None, redirect_failure_url: None, redirect_success_url: None,
-        sub_organization: None, submerchants: None, tax_amount: None, three_d_force: None,
+        checkout_design: None,
+        enabled_installments: None,
+        external_reference_id: None,
+        metadata: None,
+        order_cards: None,
+        paid_amount: None,
+        partial_payment: None,
+        payment_methods: None,
+        payment_mode: None,
+        payment_options: None,
+        payment_terms: None,
+        pf_sub_merchant: None,
+        redirect_failure_url: None,
+        redirect_success_url: None,
+        sub_organization: None,
+        submerchants: None,
+        tax_amount: None,
+        three_d_force: None,
     };
 
     println!("📦 Creating Order...");
@@ -111,7 +140,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(create_response) => {
             println!("   ✅ Order Created Successfully!");
             if let Some(oid) = &create_response.order_id {
-                 println!("      Order ID: {}", oid);
+                println!("      Order ID: {}", oid);
             }
             if let Some(ref_id) = &create_response.reference_id {
                 println!("      Reference ID: {}", ref_id);
@@ -138,8 +167,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
         println!("\n📊 Getting Order Status...");
         match client.get_order_status(ref_id) {
-             Ok(status) => println!("   ✅ Status: {:?}", status),
-             Err(e) => println!("   ❌ Status Failed: {}", e),
+            Ok(status) => println!("   ✅ Status: {:?}", status),
+            Err(e) => println!("   ❌ Status Failed: {}", e),
         }
     }
 
@@ -161,7 +190,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             contact_name: Some("Sub Subscriber".to_string()),
             city: Some("Istanbul".to_string()),
             country: Some("TR".to_string()),
-            address: None, vat_number: None, zip_code: None
+            address: None,
+            vat_number: None,
+            zip_code: None,
         }),
         user: Some(SubscriptionUser {
             first_name: Some("Ahmet".to_string()),
@@ -170,23 +201,30 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             phone: Some("5321234567".to_string()),
             city: Some("Istanbul".to_string()),
             country: Some("Turkey".to_string()),
-            address: None, id: None, identity_number: None, zip_code: None
+            address: None,
+            id: None,
+            identity_number: None,
+            zip_code: None,
         }),
         // Initialize others to None
-        card_id: None, cycle: None, external_reference_id: Some("ext_sub_01".to_string()),
-        failure_url: None, payment_date: None, success_url: None,
+        card_id: None,
+        cycle: None,
+        external_reference_id: Some("ext_sub_01".to_string()),
+        failure_url: None,
+        payment_date: None,
+        success_url: None,
     };
 
     match client.create_subscription(sub_request) {
         Ok(sub_resp) => {
             println!("   ✅ Subscription Created!");
             println!("      Ref ID: {:?}", sub_resp.reference_id);
-            
+
             // List Subscriptions
-             match client.list_subscriptions(1, 5) {
-                 Ok(list) => println!("   ✅ Subscriptions List: {:?}", list),
-                 Err(e) => println!("   ❌ List Subscriptions Failed: {}", e),
-             }
+            match client.list_subscriptions(1, 5) {
+                Ok(list) => println!("   ✅ Subscriptions List: {:?}", list),
+                Err(e) => println!("   ❌ List Subscriptions Failed: {}", e),
+            }
         }
         Err(e) => println!("   ❌ Subscription Creation Failed: {}", e),
     }
@@ -195,8 +233,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n=== 7. TERM MANAGEMENT (Termination) ===");
     // Attempting on a dummy term ID, expected to fail or 404, but tests the method signature
     match client.terminate_order_term("non_existent_term_id", Some("Test Reason".to_string())) {
-        Ok(resp) => println!("   ✅ Term Terminated (Unexpected success for dummy ID): {:?}", resp),
-        Err(e) => println!("   ✅ Term Termination Failed as expected (dummy ID): {}", e),
+        Ok(resp) => println!(
+            "   ✅ Term Terminated (Unexpected success for dummy ID): {:?}",
+            resp
+        ),
+        Err(e) => println!(
+            "   ✅ Term Termination Failed as expected (dummy ID): {}",
+            e
+        ),
     }
 
     // 8. API Health

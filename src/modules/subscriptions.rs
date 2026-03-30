@@ -18,9 +18,7 @@ impl SubscriptionModule {
     /// Creates a new subscription
     pub fn create(&self, request: SubscriptionCreateRequest) -> Result<SubscriptionCreateResponse> {
         let endpoint = "subscription/create";
-        let response = self
-            .client
-            .make_request("POST", endpoint, Some(&request))?;
+        let response = self.client.make_request("POST", endpoint, Some(&request))?;
         serde_json::from_value(response).map_err(|e| {
             crate::error::TapsilatError::ConfigError(format!(
                 "Failed to parse subscription create response: {}",
@@ -32,9 +30,7 @@ impl SubscriptionModule {
     /// Gets subscription details
     pub fn get(&self, request: SubscriptionGetRequest) -> Result<SubscriptionDetail> {
         let endpoint = "subscription";
-        let response = self
-            .client
-            .make_request("POST", endpoint, Some(&request))?;
+        let response = self.client.make_request("POST", endpoint, Some(&request))?;
         serde_json::from_value(response).map_err(|e| {
             crate::error::TapsilatError::ConfigError(format!(
                 "Failed to parse subscription detail response: {}",
@@ -57,11 +53,12 @@ impl SubscriptionModule {
     }
 
     /// Gets redirect URL for a subscription
-    pub fn redirect(&self, request: SubscriptionRedirectRequest) -> Result<SubscriptionRedirectResponse> {
+    pub fn redirect(
+        &self,
+        request: SubscriptionRedirectRequest,
+    ) -> Result<SubscriptionRedirectResponse> {
         let endpoint = "subscription/redirect";
-        let response = self
-            .client
-            .make_request("POST", endpoint, Some(&request))?;
+        let response = self.client.make_request("POST", endpoint, Some(&request))?;
         serde_json::from_value(response).map_err(|e| {
             crate::error::TapsilatError::ConfigError(format!(
                 "Failed to parse subscription redirect response: {}",

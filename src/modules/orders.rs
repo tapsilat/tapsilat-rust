@@ -32,14 +32,17 @@ impl OrderModule {
         let endpoint = format!("order/{}", reference_id);
         let response = self.client.make_request::<()>("GET", &endpoint, None)?;
         let api_response: ApiResponse<Order> = serde_json::from_value(response).map_err(|e| {
-             crate::error::TapsilatError::ConfigError(format!("Failed to parse order response: {}", e))
+            crate::error::TapsilatError::ConfigError(format!(
+                "Failed to parse order response: {}",
+                e
+            ))
         })?;
-        
+
         match api_response.data {
-             Some(order) => Ok(order),
-             None => Err(crate::error::TapsilatError::InvalidResponse(
-                 api_response.message.unwrap_or("No data".to_string())
-             ))
+            Some(order) => Ok(order),
+            None => Err(crate::error::TapsilatError::InvalidResponse(
+                api_response.message.unwrap_or("No data".to_string()),
+            )),
         }
     }
 
@@ -50,18 +53,23 @@ impl OrderModule {
     }
 
     /// Lists orders with optional pagination
-    pub fn list(&self, page: u32, per_page: u32, buyer_id: Option<String>) -> Result<serde_json::Value> {
+    pub fn list(
+        &self,
+        page: u32,
+        per_page: u32,
+        buyer_id: Option<String>,
+    ) -> Result<serde_json::Value> {
         let mut endpoint = "order/list".to_string();
         let mut params = Vec::new();
         params.push(format!("page={}", page));
         params.push(format!("per_page={}", per_page));
-        
+
         if let Some(bid) = buyer_id {
             params.push(format!("buyer_id={}", bid));
         }
 
         if !params.is_empty() {
-             endpoint = format!("{}?{}", endpoint, params.join("&"));
+            endpoint = format!("{}?{}", endpoint, params.join("&"));
         }
 
         self.client.make_request::<()>("GET", &endpoint, None)
@@ -78,16 +86,20 @@ impl OrderModule {
     pub fn refund(&self, request: RefundOrderRequest) -> Result<serde_json::Value> {
         let endpoint = "order/refund";
         let response = self.client.make_request("POST", endpoint, Some(&request))?;
-        let api_response: ApiResponse<serde_json::Value> = serde_json::from_value(response).map_err(|e| {
-             crate::error::TapsilatError::ConfigError(format!("Failed to parse refund response: {}", e))
-        })?;
+        let api_response: ApiResponse<serde_json::Value> = serde_json::from_value(response)
+            .map_err(|e| {
+                crate::error::TapsilatError::ConfigError(format!(
+                    "Failed to parse refund response: {}",
+                    e
+                ))
+            })?;
 
         match api_response.data {
-             Some(v) => Ok(v),
-             None => Ok(serde_json::Value::Null)
+            Some(v) => Ok(v),
+            None => Ok(serde_json::Value::Null),
         }
     }
-    
+
     /// Refunds all items in an order
     pub fn refund_all(&self, reference_id: &str) -> Result<serde_json::Value> {
         let endpoint = "order/refund-all";
@@ -99,39 +111,60 @@ impl OrderModule {
     pub fn get_checkout_url(&self, reference_id: &str) -> Result<String> {
         let order = self.get(reference_id)?;
         order.checkout_url.ok_or_else(|| {
-             crate::error::TapsilatError::InvalidResponse("Checkout URL not found".to_string())
+            crate::error::TapsilatError::InvalidResponse("Checkout URL not found".to_string())
         })
     }
-    
-    pub fn create_term(&self, request: crate::types::OrderPaymentTermCreateDTO) -> Result<serde_json::Value> {
-         let endpoint = "order/term";
-         self.client.make_request("POST", endpoint, Some(&request))
-    }
-    
-    pub fn update_term(&self, request: crate::types::OrderPaymentTermUpdateDTO) -> Result<serde_json::Value> {
-         let endpoint = "order/term";
-         self.client.make_request("PATCH", endpoint, Some(&request))
-    }
-    
-    pub fn delete_term(&self, order_id: &str, term_reference_id: &str) -> Result<serde_json::Value> {
-         let endpoint = "order/term";
-         let payload = serde_json::json!({ "order_id": order_id, "term_reference_id": term_reference_id });
-         self.client.make_request("DELETE", endpoint, Some(&payload))
-    }
-    
-    pub fn refund_term(&self, request: crate::types::OrderTermRefundRequest) -> Result<serde_json::Value> {
-         let endpoint = "order/term/refund";
-         self.client.make_request("POST", endpoint, Some(&request))
+
+    pub fn create_term(
+        &self,
+        request: crate::types::OrderPaymentTermCreateDTO,
+    ) -> Result<serde_json::Value> {
+        let endpoint = "order/term";
+        self.client.make_request("POST", endpoint, Some(&request))
     }
 
-    pub fn terminate_term(&self, term_reference_id: &str, reason: Option<String>) -> Result<serde_json::Value> {
-         let endpoint = "order/term/terminate";
-         let mut payload = serde_json::Map::new();
-         payload.insert("term_reference_id".to_string(), serde_json::Value::String(term_reference_id.to_string()));
-         if let Some(r) = reason {
-             payload.insert("reason".to_string(), serde_json::Value::String(r));
-         }
-         self.client.make_request("POST", endpoint, Some(&payload))
+    pub fn update_term(
+        &self,
+        request: crate::types::OrderPaymentTermUpdateDTO,
+    ) -> Result<serde_json::Value> {
+        let endpoint = "order/term";
+        self.client.make_request("PATCH", endpoint, Some(&request))
+    }
+
+    pub fn delete_term(
+        &self,
+        order_id: &str,
+        term_reference_id: &str,
+    ) -> Result<serde_json::Value> {
+        let endpoint = "order/term";
+        let payload =
+            serde_json::json!({ "order_id": order_id, "term_reference_id": term_reference_id });
+        self.client.make_request("DELETE", endpoint, Some(&payload))
+    }
+
+    pub fn refund_term(
+        &self,
+        request: crate::types::OrderTermRefundRequest,
+    ) -> Result<serde_json::Value> {
+        let endpoint = "order/term/refund";
+        self.client.make_request("POST", endpoint, Some(&request))
+    }
+
+    pub fn terminate_term(
+        &self,
+        term_reference_id: &str,
+        reason: Option<String>,
+    ) -> Result<serde_json::Value> {
+        let endpoint = "order/term/terminate";
+        let mut payload = serde_json::Map::new();
+        payload.insert(
+            "term_reference_id".to_string(),
+            serde_json::Value::String(term_reference_id.to_string()),
+        );
+        if let Some(r) = reason {
+            payload.insert("reason".to_string(), serde_json::Value::String(r));
+        }
+        self.client.make_request("POST", endpoint, Some(&payload))
     }
 
     pub fn get_term(&self, term_reference_id: &str) -> Result<serde_json::Value> {
@@ -140,22 +173,36 @@ impl OrderModule {
     }
 
     pub fn terminate(&self, reference_id: &str) -> Result<serde_json::Value> {
-         let endpoint = "order/terminate";
-         let payload = serde_json::json!({ "reference_id": reference_id });
-         self.client.make_request("POST", endpoint, Some(&payload))
+        let endpoint = "order/terminate";
+        let payload = serde_json::json!({ "reference_id": reference_id });
+        self.client.make_request("POST", endpoint, Some(&payload))
     }
-    
-    pub fn manual_callback(&self, reference_id: &str, conversation_id: Option<String>) -> Result<serde_json::Value> {
-         let endpoint = "order/callback";
-         let mut payload = serde_json::Map::new();
-         payload.insert("reference_id".to_string(), serde_json::Value::String(reference_id.to_string()));
-         if let Some(cid) = conversation_id {
-             payload.insert("conversation_id".to_string(), serde_json::Value::String(cid));
-         }
-         self.client.make_request("POST", endpoint, Some(&payload))
+
+    pub fn manual_callback(
+        &self,
+        reference_id: &str,
+        conversation_id: Option<String>,
+    ) -> Result<serde_json::Value> {
+        let endpoint = "order/callback";
+        let mut payload = serde_json::Map::new();
+        payload.insert(
+            "reference_id".to_string(),
+            serde_json::Value::String(reference_id.to_string()),
+        );
+        if let Some(cid) = conversation_id {
+            payload.insert(
+                "conversation_id".to_string(),
+                serde_json::Value::String(cid),
+            );
+        }
+        self.client.make_request("POST", endpoint, Some(&payload))
     }
-    
-    pub fn related_update(&self, reference_id: &str, related_reference_id: &str) -> Result<serde_json::Value> {
+
+    pub fn related_update(
+        &self,
+        reference_id: &str,
+        related_reference_id: &str,
+    ) -> Result<serde_json::Value> {
         let endpoint = "order/releated";
         let payload = serde_json::json!({
             "reference_id": reference_id,
@@ -163,14 +210,17 @@ impl OrderModule {
         });
         self.client.make_request("PATCH", endpoint, Some(&payload))
     }
-    
 
     pub fn add_basket_item(&self, request: serde_json::Value) -> Result<serde_json::Value> {
         let endpoint = "order/basket-item";
         self.client.make_request("POST", endpoint, Some(&request))
     }
 
-    pub fn remove_basket_item(&self, order_id: &str, basket_item_id: &str) -> Result<serde_json::Value> {
+    pub fn remove_basket_item(
+        &self,
+        order_id: &str,
+        basket_item_id: &str,
+    ) -> Result<serde_json::Value> {
         let endpoint = "order/basket-item";
         let payload = serde_json::json!({
             "order_reference_id": order_id,
@@ -184,13 +234,19 @@ impl OrderModule {
         self.client.make_request("PATCH", endpoint, Some(&request))
     }
 
-    pub fn accounting(&self, request: crate::types::OrderAccountingRequest) -> Result<serde_json::Value> {
+    pub fn accounting(
+        &self,
+        request: crate::types::OrderAccountingRequest,
+    ) -> Result<serde_json::Value> {
         let endpoint = "order/accounting";
         self.client.make_request("POST", endpoint, Some(&request))
     }
-    
-    pub fn postauth(&self, request: crate::types::OrderPostAuthRequest) -> Result<serde_json::Value> {
-         let endpoint = "order/postauth";
-         self.client.make_request("POST", endpoint, Some(&request))
+
+    pub fn postauth(
+        &self,
+        request: crate::types::OrderPostAuthRequest,
+    ) -> Result<serde_json::Value> {
+        let endpoint = "order/postauth";
+        self.client.make_request("POST", endpoint, Some(&request))
     }
 }
