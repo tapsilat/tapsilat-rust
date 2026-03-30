@@ -1,0 +1,9 @@
+services:
+  test:
+    build: .
+    volumes:
+      - .:/app
+      - /app/target
+    env_file:
+      - .env
+    command: cargo test

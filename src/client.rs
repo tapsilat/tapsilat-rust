@@ -5,7 +5,7 @@
 
 use crate::config::Config;
 use crate::error::{Result, TapsilatError};
-use crate::modules::{InstallmentModule, OrderModule, PaymentModule, SubscriptionModule, WebhookModule};
+use crate::modules::{InstallmentModule, OrderModule, OrganizationModule, PaymentModule, SubscriptionModule, WebhookModule};
 use crate::types::*;
 use serde_json::Value;
 
@@ -23,7 +23,7 @@ impl TapsilatClient {
     pub fn new(config: Config) -> Result<Self> {
         config.validate()?;
 
-        let http_client = ureq::Agent::new_with_defaults();
+        let http_client = ureq::Agent::new();
 
         Ok(Self {
             config,
@@ -44,6 +44,11 @@ impl TapsilatClient {
     /// Access to order operations
     pub fn orders(&self) -> OrderModule {
         OrderModule::new(std::sync::Arc::new(self.clone()))
+    }
+
+    /// Access to organization operations
+    pub fn organization(&self) -> OrganizationModule {
+        OrganizationModule::new(std::sync::Arc::new(self.clone()))
     }
 
     /// Access to installment operations
@@ -138,9 +143,77 @@ impl TapsilatClient {
     }
     
     pub fn get_organization_settings(&self) -> Result<Value> {
-        self.make_request::<()>("GET", "organization/settings", None)
+        self.organization().get_settings()
     }
-    
+
+    pub fn get_organization_callback(&self) -> Result<Value> {
+        self.organization().get_callback()
+    }
+
+    pub fn update_organization_callback(&self, request: CallbackURLDTO) -> Result<Value> {
+        self.organization().update_callback(request)
+    }
+
+    pub fn create_organization_business(&self, request: OrgCreateBusinessRequest) -> Result<Value> {
+        self.organization().create_business(request)
+    }
+
+    pub fn get_organization_currencies(&self) -> Result<Value> {
+        self.organization().get_currencies()
+    }
+
+    pub fn get_organization_limit_user(&self, user_id: &str) -> Result<Value> {
+        self.organization().get_limit_user(user_id)
+    }
+
+    pub fn set_organization_limit_user(&self, request: SetLimitUserRequest) -> Result<Value> {
+        self.organization().set_limit_user(request)
+    }
+
+    pub fn get_organization_limits(&self) -> Result<Value> {
+        self.organization().get_limits()
+    }
+
+    pub fn list_organization_vpos(&self, currency_id: &str) -> Result<Value> {
+        self.organization().list_vpos(currency_id)
+    }
+
+    pub fn get_organization_meta(&self, name: &str) -> Result<Value> {
+        self.organization().get_meta(name)
+    }
+
+    pub fn get_organization_scopes(&self) -> Result<Value> {
+        self.organization().get_scopes()
+    }
+
+    pub fn get_organization_suborganizations(&self, page: u32, per_page: u32) -> Result<Value> {
+        self.organization().get_suborganizations(page, per_page)
+    }
+
+    pub fn create_organization_user(&self, request: OrgCreateUserReq) -> Result<Value> {
+        self.organization().create_user(request)
+    }
+
+    pub fn verify_organization_user(&self, user_id: &str) -> Result<Value> {
+        self.organization().verify_user(user_id)
+    }
+
+    pub fn verify_organization_user_mobile(&self, user_id: &str) -> Result<Value> {
+        self.organization().verify_user_mobile(user_id)
+    }
+
+    pub fn order_add_basket_item(&self, request: Value) -> Result<Value> {
+        self.orders().add_basket_item(request)
+    }
+
+    pub fn order_remove_basket_item(&self, order_id: &str, item_id: &str) -> Result<Value> {
+        self.orders().remove_basket_item(order_id, item_id)
+    }
+
+    pub fn order_update_basket_item(&self, request: Value) -> Result<Value> {
+        self.orders().update_basket_item(request)
+    }
+
     pub fn health_check(&self) -> Result<Value> {
         self.make_request::<()>("GET", "health", None)
     }
@@ -164,8 +237,7 @@ impl TapsilatClient {
     }
     
     pub fn get_order_term(&self, term_reference_id: &str) -> Result<Value> {
-        let endpoint = format!("order/term/{}", term_reference_id);
-        self.make_request::<()>("GET", &endpoint, None)
+        self.orders().get_term(term_reference_id)
     }
 
     pub fn order_terminate(&self, reference_id: &str) -> Result<Value> {
@@ -252,13 +324,13 @@ impl TapsilatClient {
             eprintln!("   Request Body: (empty)");
         }
 
-        let mut response = match method.to_uppercase().as_str() {
+        let response = match method.to_uppercase().as_str() {
             "GET" => self
                 .http_client
                 .get(&url)
-                .header("Authorization", &format!("Bearer {}", self.config.api_key))
-                .header("Content-Type", "application/json")
-                .header(
+                .set("Authorization", &format!("Bearer {}", self.config.api_key))
+                .set("Content-Type", "application/json")
+                .set(
                     "User-Agent",
                     &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                 )
@@ -267,9 +339,9 @@ impl TapsilatClient {
                 Some(data) => self
                     .http_client
                     .post(&url)
-                    .header("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .header("Content-Type", "application/json")
-                    .header(
+                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
+                    .set("Content-Type", "application/json")
+                    .set(
                         "User-Agent",
                         &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                     )
@@ -277,21 +349,21 @@ impl TapsilatClient {
                 None => self
                     .http_client
                     .post(&url)
-                    .header("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .header("Content-Type", "application/json")
-                    .header(
+                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
+                    .set("Content-Type", "application/json")
+                    .set(
                         "User-Agent",
                         &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                     )
-                    .send("")?,
+                    .send_string("")?,
             },
             "PUT" => match body {
                 Some(data) => self
                     .http_client
                     .put(&url)
-                    .header("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .header("Content-Type", "application/json")
-                    .header(
+                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
+                    .set("Content-Type", "application/json")
+                    .set(
                         "User-Agent",
                         &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                     )
@@ -299,24 +371,58 @@ impl TapsilatClient {
                 None => self
                     .http_client
                     .put(&url)
-                    .header("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .header("Content-Type", "application/json")
-                    .header(
+                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
+                    .set("Content-Type", "application/json")
+                    .set(
                         "User-Agent",
                         &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                     )
-                    .send("")?,
+                    .send_string("")?,
             },
-            "DELETE" => self
-                .http_client
-                .delete(&url)
-                .header("Authorization", &format!("Bearer {}", self.config.api_key))
-                .header("Content-Type", "application/json")
-                .header(
-                    "User-Agent",
-                    &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
-                )
-                .call()?,
+            "PATCH" => match body {
+                Some(data) => self
+                    .http_client
+                    .request("PATCH", &url)
+                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
+                    .set("Content-Type", "application/json")
+                    .set(
+                        "User-Agent",
+                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+                    )
+                    .send_json(data)?,
+                None => self
+                    .http_client
+                    .request("PATCH", &url)
+                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
+                    .set("Content-Type", "application/json")
+                    .set(
+                        "User-Agent",
+                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+                    )
+                    .send_string("")?,
+            },
+            "DELETE" => match body {
+                Some(data) => self
+                    .http_client
+                    .request("DELETE", &url)
+                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
+                    .set("Content-Type", "application/json")
+                    .set(
+                        "User-Agent",
+                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+                    )
+                    .send_json(data)?,
+                None => self
+                    .http_client
+                    .delete(&url)
+                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
+                    .set("Content-Type", "application/json")
+                    .set(
+                        "User-Agent",
+                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+                    )
+                    .call()?,
+            },
             _ => {
                 return Err(TapsilatError::ConfigError(format!(
                     "Unsupported HTTP method: {}",
@@ -325,13 +431,15 @@ impl TapsilatClient {
             }
         };
 
-        if response.status().as_u16() >= 400 {
-            let status_code = response.status().as_u16();
-            let body_text = response.body_mut().read_to_string().unwrap_or_default();
+        let status_code = response.status();
+        let body_text = response.into_string().map_err(|e| {
+            TapsilatError::ConfigError(format!("Failed to read response body: {}", e))
+        })?;
 
+        if status_code >= 400 {
             // Debug logging for errors
             eprintln!("\n❌ HTTP Error Response Debug:");
-            eprintln!("   Status: {} {}", status_code, response.status());
+            eprintln!("   Status: {}", status_code);
             eprintln!("   Error Body:\n{}", body_text);
 
             let error_body: serde_json::Value =
@@ -347,18 +455,12 @@ impl TapsilatClient {
             });
         }
 
-        let body_text = response.body_mut().read_to_string().map_err(|e| {
-            TapsilatError::ConfigError(format!("Failed to read response body: {}", e))
-        })?;
-
         // Debug logging
         eprintln!("\n📥 HTTP Response Debug:");
-        eprintln!("   Status: {}", response.status());
+        eprintln!("   Status: {}", status_code);
         eprintln!("   Response Body:\n{}", body_text);
 
         if body_text.trim().is_empty() {
-             // For some endpoints like terminate or cancel, an empty body might be fine or return just 200 OK.
-             // But usually we expect JSON. If it's empty, return null Value.
              return Ok(serde_json::Value::Null);
         }
 

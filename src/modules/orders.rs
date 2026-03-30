@@ -109,14 +109,14 @@ impl OrderModule {
     }
     
     pub fn update_term(&self, request: crate::types::OrderPaymentTermUpdateDTO) -> Result<serde_json::Value> {
-         let endpoint = "order/term/update";
-         self.client.make_request("POST", endpoint, Some(&request))
+         let endpoint = "order/term";
+         self.client.make_request("PATCH", endpoint, Some(&request))
     }
     
     pub fn delete_term(&self, order_id: &str, term_reference_id: &str) -> Result<serde_json::Value> {
-         let endpoint = "order/term/delete";
+         let endpoint = "order/term";
          let payload = serde_json::json!({ "order_id": order_id, "term_reference_id": term_reference_id });
-         self.client.make_request("POST", endpoint, Some(&payload))
+         self.client.make_request("DELETE", endpoint, Some(&payload))
     }
     
     pub fn refund_term(&self, request: crate::types::OrderTermRefundRequest) -> Result<serde_json::Value> {
@@ -134,6 +134,11 @@ impl OrderModule {
          self.client.make_request("POST", endpoint, Some(&payload))
     }
 
+    pub fn get_term(&self, term_reference_id: &str) -> Result<serde_json::Value> {
+        let endpoint = format!("order/term?term_reference_id={}", term_reference_id);
+        self.client.make_request::<()>("GET", &endpoint, None)
+    }
+
     pub fn terminate(&self, reference_id: &str) -> Result<serde_json::Value> {
          let endpoint = "order/terminate";
          let payload = serde_json::json!({ "reference_id": reference_id });
@@ -141,7 +146,7 @@ impl OrderModule {
     }
     
     pub fn manual_callback(&self, reference_id: &str, conversation_id: Option<String>) -> Result<serde_json::Value> {
-         let endpoint = "order/manual-callback";
+         let endpoint = "order/callback";
          let mut payload = serde_json::Map::new();
          payload.insert("reference_id".to_string(), serde_json::Value::String(reference_id.to_string()));
          if let Some(cid) = conversation_id {
@@ -151,14 +156,34 @@ impl OrderModule {
     }
     
     pub fn related_update(&self, reference_id: &str, related_reference_id: &str) -> Result<serde_json::Value> {
-        let endpoint = "order/related-update";
+        let endpoint = "order/releated";
         let payload = serde_json::json!({
             "reference_id": reference_id,
             "related_reference_id": related_reference_id
         });
-        self.client.make_request("POST", endpoint, Some(&payload))
+        self.client.make_request("PATCH", endpoint, Some(&payload))
     }
     
+
+    pub fn add_basket_item(&self, request: serde_json::Value) -> Result<serde_json::Value> {
+        let endpoint = "order/basket-item";
+        self.client.make_request("POST", endpoint, Some(&request))
+    }
+
+    pub fn remove_basket_item(&self, order_id: &str, basket_item_id: &str) -> Result<serde_json::Value> {
+        let endpoint = "order/basket-item";
+        let payload = serde_json::json!({
+            "order_reference_id": order_id,
+            "basket_item_id": basket_item_id
+        });
+        self.client.make_request("DELETE", endpoint, Some(&payload))
+    }
+
+    pub fn update_basket_item(&self, request: serde_json::Value) -> Result<serde_json::Value> {
+        let endpoint = "order/basket-item";
+        self.client.make_request("PATCH", endpoint, Some(&request))
+    }
+
     pub fn accounting(&self, request: crate::types::OrderAccountingRequest) -> Result<serde_json::Value> {
         let endpoint = "order/accounting";
         self.client.make_request("POST", endpoint, Some(&request))

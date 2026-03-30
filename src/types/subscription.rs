@@ -101,6 +101,14 @@ pub struct SubscriptionCreateRequest {
     pub success_url: Option<String>,
     pub title: Option<String>,
     pub user: Option<SubscriptionUser>,
+    #[serde(rename = "price_option")]
+    pub price_option: Option<SubscriptionPriceOption>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct SubscriptionPriceOption {
+    pub count: i32,
+    pub price: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

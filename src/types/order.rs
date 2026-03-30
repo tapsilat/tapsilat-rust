@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 
 pub struct Order {
     pub id: Option<String>,
@@ -123,6 +123,13 @@ pub struct CreateOrderRequest {
     pub tax_amount: Option<f64>,
     #[serde(rename = "three_d_force")]
     pub three_d_force: Option<bool>,
+    pub consents: Option<Vec<OrderConsent>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OrderConsent {
+    pub title: Option<String>,
+    pub url: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
