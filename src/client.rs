@@ -26,7 +26,7 @@ impl TapsilatClient {
     pub fn new(config: Config) -> Result<Self> {
         config.validate()?;
 
-        let http_client = ureq::Agent::new();
+        let http_client = ureq::Agent::new_with_defaults();
 
         Ok(Self {
             config,
@@ -356,102 +356,103 @@ impl TapsilatClient {
             eprintln!("   Request Body: (empty)");
         }
 
-        let response = match method.to_uppercase().as_str() {
+        let mut response = match method.to_uppercase().as_str() {
             "GET" => self
                 .http_client
                 .get(&url)
-                .set("Authorization", &format!("Bearer {}", self.config.api_key))
-                .set("Content-Type", "application/json")
-                .set(
+                .header("Authorization", format!("Bearer {}", self.config.api_key))
+                .header("Content-Type", "application/json")
+                .header(
                     "User-Agent",
-                    &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+                    format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                 )
                 .call()?,
             "POST" => match body {
                 Some(data) => self
                     .http_client
                     .post(&url)
-                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .set("Content-Type", "application/json")
-                    .set(
+                    .header("Authorization", format!("Bearer {}", self.config.api_key))
+                    .header("Content-Type", "application/json")
+                    .header(
                         "User-Agent",
-                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+                        format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                     )
                     .send_json(data)?,
                 None => self
                     .http_client
                     .post(&url)
-                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .set("Content-Type", "application/json")
-                    .set(
+                    .header("Authorization", format!("Bearer {}", self.config.api_key))
+                    .header("Content-Type", "application/json")
+                    .header(
                         "User-Agent",
-                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+                        format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                     )
-                    .send_string("")?,
+                    .send_empty()?,
             },
             "PUT" => match body {
                 Some(data) => self
                     .http_client
                     .put(&url)
-                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .set("Content-Type", "application/json")
-                    .set(
+                    .header("Authorization", format!("Bearer {}", self.config.api_key))
+                    .header("Content-Type", "application/json")
+                    .header(
                         "User-Agent",
-                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+                        format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                     )
                     .send_json(data)?,
                 None => self
                     .http_client
                     .put(&url)
-                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .set("Content-Type", "application/json")
-                    .set(
+                    .header("Authorization", format!("Bearer {}", self.config.api_key))
+                    .header("Content-Type", "application/json")
+                    .header(
                         "User-Agent",
-                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+                        format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                     )
-                    .send_string("")?,
+                    .send_empty()?,
             },
             "PATCH" => match body {
                 Some(data) => self
                     .http_client
-                    .request("PATCH", &url)
-                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .set("Content-Type", "application/json")
-                    .set(
+                    .patch(&url)
+                    .header("Authorization", format!("Bearer {}", self.config.api_key))
+                    .header("Content-Type", "application/json")
+                    .header(
                         "User-Agent",
-                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+                        format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                     )
                     .send_json(data)?,
                 None => self
                     .http_client
-                    .request("PATCH", &url)
-                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .set("Content-Type", "application/json")
-                    .set(
+                    .patch(&url)
+                    .header("Authorization", format!("Bearer {}", self.config.api_key))
+                    .header("Content-Type", "application/json")
+                    .header(
                         "User-Agent",
-                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+                        format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                     )
-                    .send_string("")?,
+                    .send_empty()?,
             },
             "DELETE" => match body {
                 Some(data) => self
                     .http_client
-                    .request("DELETE", &url)
-                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .set("Content-Type", "application/json")
-                    .set(
+                    .delete(&url)
+                    .force_send_body()
+                    .header("Authorization", format!("Bearer {}", self.config.api_key))
+                    .header("Content-Type", "application/json")
+                    .header(
                         "User-Agent",
-                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+                        format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                     )
                     .send_json(data)?,
                 None => self
                     .http_client
                     .delete(&url)
-                    .set("Authorization", &format!("Bearer {}", self.config.api_key))
-                    .set("Content-Type", "application/json")
-                    .set(
+                    .header("Authorization", format!("Bearer {}", self.config.api_key))
+                    .header("Content-Type", "application/json")
+                    .header(
                         "User-Agent",
-                        &format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
+                        format!("tapsilat-rust/{}", env!("CARGO_PKG_VERSION")),
                     )
                     .call()?,
             },
@@ -463,8 +464,8 @@ impl TapsilatClient {
             }
         };
 
-        let status_code = response.status();
-        let body_text = response.into_string().map_err(|e| {
+        let status_code = response.status().as_u16();
+        let body_text = response.body_mut().read_to_string().map_err(|e| {
             TapsilatError::ConfigError(format!("Failed to read response body: {}", e))
         })?;
 
