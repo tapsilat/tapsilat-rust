@@ -89,6 +89,7 @@ async fn test_order_creation_with_mock() {
         submerchants: None,
         tax_amount: None,
         three_d_force: None,
+        consents: None,
     };
 
     let result = client.orders().create(order_request);
@@ -287,6 +288,7 @@ async fn test_error_handling_with_mock() {
         submerchants: None,
         tax_amount: None,
         three_d_force: None,
+        consents: None,
     };
 
     let result = client.orders().create(order_request);

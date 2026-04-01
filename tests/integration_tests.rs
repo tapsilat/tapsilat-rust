@@ -75,6 +75,7 @@ fn test_order_creation_request() {
         submerchants: None,
         tax_amount: None,
         three_d_force: None,
+        consents: None,
     };
 
     // Should be valid
