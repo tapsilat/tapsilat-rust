@@ -12,7 +12,7 @@ use std::fmt;
 #[derive(Debug)]
 pub enum TapsilatError {
     /// HTTP transport error occurred during API communication.
-    Http(ureq::Error),
+    Http(Box<ureq::Error>),
     /// Error occurred while serializing or deserializing data.
     Serialization(std::io::Error),
     /// API returned an invalid or unexpected response format.
@@ -52,7 +52,7 @@ impl std::error::Error for TapsilatError {}
 
 impl From<ureq::Error> for TapsilatError {
     fn from(err: ureq::Error) -> Self {
-        TapsilatError::Http(err)
+        TapsilatError::Http(Box::new(err))
     }
 }
 
