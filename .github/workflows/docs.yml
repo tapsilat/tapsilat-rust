@@ -3,7 +3,6 @@ name: Documentation
 on:
   push:
     branches: [ main ]
-    tags: [ 'v*' ]
   workflow_dispatch:
 
 permissions:
@@ -51,6 +50,7 @@ jobs:
 
   deploy-docs:
     name: Deploy Documentation
+    if: github.ref == 'refs/heads/main'
     needs: build-docs
     runs-on: ubuntu-latest
     environment:
