@@ -1,0 +1,17 @@
+name: SDK Parity Dispatch
+
+on:
+  push:
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+  pull_request:
+    paths:
+      - "src/**"
+      - "Cargo.toml"
+  workflow_dispatch:
+
+jobs:
+  parity-dispatch:
+    uses: tapsilat/tapsilat-sdk-parity/.github/workflows/reusable-sdk-parity-dispatch.yml@main
+    secrets: inherit
