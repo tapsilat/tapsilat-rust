@@ -229,19 +229,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) => println!("   ❌ Subscription Creation Failed: {}", e),
     }
 
-    // 7. Term Management (Terminating a term)
-    println!("\n=== 7. TERM MANAGEMENT (Termination) ===");
-    // Attempting on a dummy term ID, expected to fail or 404, but tests the method signature
-    match client.terminate_order_term("non_existent_term_id", Some("Test Reason".to_string())) {
-        Ok(resp) => println!(
-            "   ✅ Term Terminated (Unexpected success for dummy ID): {:?}",
-            resp
-        ),
-        Err(e) => println!(
-            "   ✅ Term Termination Failed as expected (dummy ID): {}",
-            e
-        ),
-    }
+
 
     // 8. API Health
     println!("\n=== 8. HEALTH CHECK ===");

@@ -260,13 +260,7 @@ impl TapsilatClient {
         self.orders().terminate(reference_id)
     }
 
-    pub fn terminate_order_term(
-        &self,
-        term_reference_id: &str,
-        reason: Option<String>,
-    ) -> Result<Value> {
-        self.orders().terminate_term(term_reference_id, reason)
-    }
+
 
     pub fn order_accounting(&self, request: OrderAccountingRequest) -> Result<Value> {
         self.orders().accounting(request)

@@ -150,22 +150,7 @@ impl OrderModule {
         self.client.make_request("POST", endpoint, Some(&request))
     }
 
-    pub fn terminate_term(
-        &self,
-        term_reference_id: &str,
-        reason: Option<String>,
-    ) -> Result<serde_json::Value> {
-        let endpoint = "order/term/terminate";
-        let mut payload = serde_json::Map::new();
-        payload.insert(
-            "term_reference_id".to_string(),
-            serde_json::Value::String(term_reference_id.to_string()),
-        );
-        if let Some(r) = reason {
-            payload.insert("reason".to_string(), serde_json::Value::String(r));
-        }
-        self.client.make_request("POST", endpoint, Some(&payload))
-    }
+
 
     pub fn get_term(&self, term_reference_id: &str) -> Result<serde_json::Value> {
         let endpoint = format!("order/term?term_reference_id={}", term_reference_id);

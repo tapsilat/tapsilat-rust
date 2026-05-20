@@ -106,4 +106,22 @@ impl OrganizationModule {
         self.client
             .make_request("POST", "organization/user/verify-mobile", Some(&payload))
     }
+
+    /// Retrieves currency presets
+    pub fn currency_presets(&self) -> Result<serde_json::Value> {
+        self.client
+            .make_request::<()>("GET", "organization/currency-presets", None)
+    }
+
+    /// Retrieves suborganization details
+    pub fn suborganization_details(&self, id: &str) -> Result<serde_json::Value> {
+        let endpoint = format!("organization/suborganizations/{}", id);
+        self.client.make_request::<()>("GET", &endpoint, None)
+    }
+
+    /// Retrieves suborganization submerchants
+    pub fn suborganization_submerchants(&self, id: &str) -> Result<serde_json::Value> {
+        let endpoint = format!("organization/suborganizations/{}/submerchant", id);
+        self.client.make_request::<()>("GET", &endpoint, None)
+    }
 }
