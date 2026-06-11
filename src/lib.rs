@@ -55,6 +55,7 @@
 //!     tax_amount: None,
 //!     three_d_force: None,
 //!     metadata: None,
+//!     consents: None,
 //! };
 //!
 //! let order_response = client.create_order(order_request)?;

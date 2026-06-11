@@ -3,6 +3,10 @@
 
 **Enterprise-grade Rust SDK for Tapsilat Payment Processing Platform**
 
+```
+cargo add tapsilat
+```
+
 ## About Tapsilat
 
 **Tapsilat** is Turkey's leading fintech platform providing comprehensive payment processing solutions for businesses of all sizes. Our cutting-edge technology enables secure, fast, and reliable payment transactions with support for multiple payment methods, currencies, and advanced fraud protection.

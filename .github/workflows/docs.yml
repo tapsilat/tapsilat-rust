@@ -3,7 +3,6 @@ name: Documentation
 on:
   push:
     branches: [ main ]
-    tags: [ 'v*' ]
   workflow_dispatch:
 
 permissions:
@@ -42,15 +41,16 @@ jobs:
         echo '<meta http-equiv="refresh" content="0; url=tapsilat">' > target/doc/index.html
         
     - name: Setup Pages
-      uses: actions/configure-pages@v5
+      uses: actions/configure-pages@v6
       
     - name: Upload documentation
-      uses: actions/upload-pages-artifact@v4
+      uses: actions/upload-pages-artifact@v5
       with:
         path: target/doc
 
   deploy-docs:
     name: Deploy Documentation
+    if: github.ref == 'refs/heads/main'
     needs: build-docs
     runs-on: ubuntu-latest
     environment:
@@ -59,4 +59,4 @@ jobs:
     steps:
     - name: Deploy to GitHub Pages
       id: deployment
-      uses: actions/deploy-pages@v4
+      uses: actions/deploy-pages@v5

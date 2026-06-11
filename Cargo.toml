@@ -1,6 +1,6 @@
 [package]
 name = "tapsilat"
-version = "2026.3.30"
+version = "2026.4.7"
 edition = "2021"
 
 authors = ["Tapsilat <github@tapsilat.dev>"]
@@ -13,7 +13,7 @@ keywords = ["payment", "fintech","tapsilat"]
 categories = ["api-bindings"]
 
 [dependencies]
-ureq = { version = "2.12", features = ["json"] }
+ureq = { version = "3.3", features = ["json"] }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 regex = "1.12"
@@ -21,7 +21,7 @@ chrono = { version = "0.4", features = ["serde"] }
 
 [dev-dependencies]
 mockito = "1.7"
-tokio = { version = "1.49", features = ["full"] }
+tokio = { version = "1.52", features = ["full"] }
 
 [lib]
 name = "tapsilat"

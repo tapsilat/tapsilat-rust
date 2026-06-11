@@ -131,6 +131,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         submerchants: None,
         tax_amount: None,
         three_d_force: None,
+        consents: None,
     };
 
     println!("📦 Creating Order...");
@@ -212,6 +213,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         external_reference_id: Some("ext_sub_01".to_string()),
         failure_url: None,
         payment_date: None,
+        price_option: None,
         success_url: None,
     };
 
