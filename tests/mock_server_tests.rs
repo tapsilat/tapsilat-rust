@@ -54,6 +54,7 @@ async fn test_order_creation_with_mock() {
             quantity_unit: None,
             sub_merchant_key: None,
             sub_merchant_price: None,
+            ..Default::default()
         }]),
         buyer: tapsilat::types::CreateBuyerRequest {
             name: "John".to_string(),
@@ -66,6 +67,7 @@ async fn test_order_creation_with_mock() {
             city: None,
             country: None,
             zip_code: None,
+            ..Default::default()
         },
         metadata: None,
         billing_address: None,
@@ -90,6 +92,7 @@ async fn test_order_creation_with_mock() {
         tax_amount: None,
         three_d_force: None,
         consents: None,
+        ..Default::default()
     };
 
     let result = client.orders().create(order_request);
@@ -104,30 +107,24 @@ async fn test_order_creation_with_mock() {
 async fn test_order_get_with_mock() {
     let mut server = setup_mock_server().await;
 
+    // The order detail endpoint returns the order itself, not an envelope
     let mock_response = json!({
-        "success": true,
-        "data": {
-            "id": "order_123",
-            "amount": "299.99",
-            "currency": "TRY",
-            "status": 1,
-            "status_enum": "completed",
-            "description": "Test order",
-            "buyer": null,
-            "items": [
-                {
-                    "name": "Test Item",
-                    "price": 299.99,
-                    "quantity": 1,
-                    "description": null
-                }
-            ],
-            "callback_url": null,
-            "checkout_url": null,
-            "created_at": "2023-12-01T10:30:00Z",
-            "updated_at": "2023-12-01T10:30:00Z",
-            "metadata": null
-        }
+        "id": "order_123",
+        "reference_id": "order_123",
+        "amount": "299.99",
+        "currency": "TRY",
+        "status": 1,
+        "status_enum": "completed",
+        "basket_items": [
+            {
+                "id": "item1",
+                "name": "Test Item",
+                "price": 299.99,
+                "quantity": 1
+            }
+        ],
+        "checkout_url": "https://checkout.example/order_123",
+        "created_at": "2023-12-01T10:30:00Z"
     });
 
     let _mock = server
@@ -148,9 +145,12 @@ async fn test_order_get_with_mock() {
     let order = result.unwrap();
     assert_eq!(order.id, Some("order_123".to_string()));
     assert_eq!(order.amount, Some("299.99".to_string()));
+    assert_eq!(order.basket_items.unwrap()[0].price, Some(299.99));
 }
 
+// Installment plans have no API route; this exercises the deprecated client methods only.
 #[tokio::test]
+#[allow(deprecated)]
 async fn test_installment_plan_creation_with_mock() {
     let mut server = setup_mock_server().await;
 
@@ -253,6 +253,7 @@ async fn test_error_handling_with_mock() {
             quantity_unit: None,
             sub_merchant_key: None,
             sub_merchant_price: None,
+            ..Default::default()
         }]),
         buyer: tapsilat::types::CreateBuyerRequest {
             name: "John".to_string(),
@@ -265,6 +266,7 @@ async fn test_error_handling_with_mock() {
             city: None,
             country: None,
             zip_code: None,
+            ..Default::default()
         },
         metadata: None,
         billing_address: None,
@@ -289,10 +291,21 @@ async fn test_error_handling_with_mock() {
         tax_amount: None,
         three_d_force: None,
         consents: None,
+        ..Default::default()
     };
 
     let result = client.orders().create(order_request);
-    assert!(result.is_err(), "Should return error for invalid API key");
+    match result {
+        Err(tapsilat::TapsilatError::ApiError {
+            status_code,
+            message,
+            ..
+        }) => {
+            assert_eq!(status_code, 401);
+            assert_eq!(message, "Invalid API key");
+        }
+        other => panic!("Should return an API error for an invalid API key, got {other:?}"),
+    }
 }
 
 #[tokio::test]
@@ -300,25 +313,9 @@ async fn test_order_refund_with_mock() {
     let mut server = setup_mock_server().await;
 
     let mock_response = json!({
-        "success": true,
-        "data": {
-            "refund_id": "refund_789",
-            "refund_amount": 50.0,
-            "order": {
-                "id": "order_123",
-                "amount": 299.99,
-                "currency": "TRY",
-                "status": "partially_refunded",
-                "description": "Test order",
-                "buyer": null,
-                "items": [],
-                "callback_url": null,
-                "checkout_url": null,
-                "created_at": "2023-12-01T10:30:00Z",
-                "updated_at": "2023-12-01T10:30:00Z",
-                "metadata": null
-            }
-        }
+        "status": "SUCCESS",
+        "message": "refunded",
+        "is_success": true
     });
 
     let _mock = server
@@ -340,21 +337,17 @@ async fn test_order_refund_with_mock() {
         order_item_payment_id: None,
     };
 
-    // The method seems to be taking just the request object in source, so we match that.
-    // However, the test was mocking /orders/order_123/refund which implies path param.
-    // If the SDK implementation relies on request.reference_id, let's see.
-    // The previous error said "this method takes 1 argument but 2 arguments were supplied".
-    // So `client.orders().refund(request)` is checking out.
     let result = client.orders().refund(refund_request);
     assert!(result.is_ok(), "Order refund should succeed with mock");
 
     let refund_val = result.unwrap();
-    // refund_val is serde_json::Value
-    assert_eq!(refund_val["refund_id"], "refund_789");
-    assert_eq!(refund_val["refund_amount"], 50.0);
+    assert_eq!(refund_val["is_success"], true);
+    assert_eq!(refund_val["message"], "refunded");
 }
 
+// Installment plans have no API route; this exercises the deprecated client methods only.
 #[tokio::test]
+#[allow(deprecated)]
 async fn test_pagination_with_mock() {
     let mut server = setup_mock_server().await;
 

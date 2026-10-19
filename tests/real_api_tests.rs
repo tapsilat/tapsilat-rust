@@ -71,6 +71,7 @@ fn test_real_api_order_validation() {
                 quantity_unit: None,
                 sub_merchant_key: None,
                 sub_merchant_price: None,
+                ..Default::default()
             }]),
             buyer: tapsilat::types::CreateBuyerRequest {
                 name: "John".to_string(),
@@ -83,6 +84,7 @@ fn test_real_api_order_validation() {
                 city: None,
                 country: None,
                 zip_code: None,
+                ..Default::default()
             },
             metadata: None,
             billing_address: None,
@@ -107,6 +109,7 @@ fn test_real_api_order_validation() {
             tax_amount: None,
             three_d_force: None,
             consents: None,
+            ..Default::default()
         };
 
         // Validate the order request structure
@@ -191,6 +194,7 @@ fn test_real_api_live_order_creation() {
                 quantity_unit: None,
                 sub_merchant_key: None,
                 sub_merchant_price: None,
+                ..Default::default()
             }]),
             buyer: tapsilat::types::CreateBuyerRequest {
                 name: "John".to_string(),
@@ -203,6 +207,7 @@ fn test_real_api_live_order_creation() {
                 city: None,
                 country: None,
                 zip_code: None,
+                ..Default::default()
             },
             metadata: None,
             billing_address: None,
@@ -227,6 +232,7 @@ fn test_real_api_live_order_creation() {
             tax_amount: None,
             three_d_force: None,
             consents: None,
+            ..Default::default()
         };
 
         // This would make a real API call

@@ -4,10 +4,76 @@ use regex::Regex;
 pub struct Validators;
 
 impl Validators {
-    /// Validates Turkish GSM numbers
-    /// Accepts formats: +90XXXXXXXXXX, 90XXXXXXXXXX, 0XXXXXXXXXX, XXXXXXXXXX
-    pub fn validate_gsm_number(gsm: &str) -> Result<String> {
-        Self::validate_gsm(gsm)
+    /// Validates a phone number and returns it without spaces, dashes and parentheses.
+    /// An empty number is returned unchanged. International numbers ("+..." or "00...")
+    /// and national numbers ("0...") are accepted; use [`Validators::validate_gsm`] to
+    /// require a Turkish mobile number.
+    pub fn validate_gsm_number(phone: &str) -> Result<String> {
+        if phone.is_empty() {
+            return Ok(String::new());
+        }
+
+        let clean: String = phone
+            .chars()
+            .filter(|c| !matches!(c, ' ' | '-' | '(' | ')'))
+            .collect();
+        let invalid =
+            || TapsilatError::ValidationError(format!("Invalid phone number format: {}", phone));
+
+        if clean.is_empty() || !clean.chars().all(|c| c == '+' || c.is_ascii_digit()) {
+            return Err(invalid());
+        }
+        let digits = clean.replace('+', "");
+        if digits.is_empty() {
+            return Err(invalid());
+        }
+
+        let too_short = if clean.starts_with('+') {
+            (clean.len() < 8).then_some("International phone number too short")
+        } else if clean.starts_with("00") {
+            (clean.len() < 9).then_some("International phone number (00 format) too short")
+        } else if clean.starts_with('0') {
+            (clean.len() < 7).then_some("National phone number too short")
+        } else {
+            (clean.len() < 6).then_some("Local phone number too short")
+        };
+        if let Some(message) = too_short {
+            return Err(TapsilatError::ValidationError(format!(
+                "{}: {}",
+                message, phone
+            )));
+        }
+
+        Ok(clean)
+    }
+
+    /// Parses a comma-separated installment list such as "1,2,3". Every value must be
+    /// between 1 and 12; an empty list means a single installment.
+    pub fn parse_installments(installments: &str) -> Result<Vec<u8>> {
+        let mut parsed = Vec::new();
+        for part in installments
+            .split(',')
+            .map(str::trim)
+            .filter(|p| !p.is_empty())
+        {
+            let value: i64 = part.parse().map_err(|_| {
+                TapsilatError::ValidationError(
+                    "Enabled installments must be comma-separated integers (e.g., 1,2,3 or 2,4,6)"
+                        .to_string(),
+                )
+            })?;
+            if !(1..=12).contains(&value) {
+                return Err(TapsilatError::ValidationError(format!(
+                    "Installment value '{}' is invalid. All installment values must be between 1 and 12 (inclusive).",
+                    value
+                )));
+            }
+            parsed.push(value as u8);
+        }
+        if parsed.is_empty() {
+            parsed.push(1);
+        }
+        Ok(parsed)
     }
 
     /// Validates Turkish GSM numbers
@@ -166,6 +232,35 @@ mod tests {
 
         assert!(Validators::validate_gsm("123456789").is_err()); // Too short
         assert!(Validators::validate_gsm("4551234567").is_err()); // Doesn't start with 5
+    }
+
+    #[test]
+    fn test_gsm_number_validation_matches_go() {
+        assert_eq!(
+            Validators::validate_gsm_number("+90 (555) 123-45-67").unwrap(),
+            "+905551234567"
+        );
+        assert_eq!(
+            Validators::validate_gsm_number("05551234567").unwrap(),
+            "05551234567"
+        );
+        assert_eq!(Validators::validate_gsm_number("").unwrap(), "");
+        assert!(Validators::validate_gsm_number("+12345").is_err());
+        assert!(Validators::validate_gsm_number("0012345").is_err());
+        assert!(Validators::validate_gsm_number("abc123456").is_err());
+        assert!(Validators::validate_gsm_number("+++").is_err());
+    }
+
+    #[test]
+    fn test_parse_installments() {
+        assert_eq!(Validators::parse_installments("").unwrap(), vec![1]);
+        assert_eq!(
+            Validators::parse_installments("1, 3,6").unwrap(),
+            vec![1, 3, 6]
+        );
+        assert!(Validators::parse_installments("0,3").is_err());
+        assert!(Validators::parse_installments("13").is_err());
+        assert!(Validators::parse_installments("two").is_err());
     }
 
     #[test]

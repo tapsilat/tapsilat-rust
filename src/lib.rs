@@ -5,8 +5,9 @@
 //! ## Overview
 //!
 //! The Tapsilat SDK provides a type-safe, ergonomic interface for integrating with the
-//! Tapsilat API. It supports order creation, payment processing, installment plans,
-//! webhook verification, and comprehensive validation utilities.
+//! Tapsilat API. It covers orders and payment terms, card installments, organization
+//! settings, submerchants, virtual POS, saved cards, subscriptions, the marketplace
+//! (API v2), webhook verification and validation utilities.
 //!
 //! ## Quick Start
 //!
@@ -30,32 +31,9 @@
 //!         name: "John".to_string(),
 //!         surname: "Doe".to_string(),
 //!         email: Some("john@example.com".to_string()),
-//!         gsm_number: None, identity_number: None, registration_address: None, ip: None, city: None, country: None, zip_code: None
+//!         ..Default::default()
 //!     },
-//!     basket_items: None,
-//!     billing_address: None,
-//!     shipping_address: None,
-//!     checkout_design: None,
-//!     enabled_installments: None,
-//!     external_reference_id: None,
-//!     order_cards: None,
-//!     paid_amount: None,
-//!     partial_payment: None,
-//!     payment_failure_url: None,
-//!     payment_methods: None,
-//!     payment_mode: None,
-//!     payment_options: None,
-//!     payment_success_url: None,
-//!     payment_terms: None,
-//!     pf_sub_merchant: None,
-//!     redirect_failure_url: None,
-//!     redirect_success_url: None,
-//!     sub_organization: None,
-//!     submerchants: None,
-//!     tax_amount: None,
-//!     three_d_force: None,
-//!     metadata: None,
-//!     consents: None,
+//!     ..Default::default()
 //! };
 //!
 //! let order_response = client.create_order(order_request)?;
@@ -69,8 +47,8 @@
 //! - **Error Handling**: Robust error types with detailed context
 //! - **Flexible API**: Both direct client methods and modular interfaces
 //! - **Validation**: Built-in validators for Turkish phone numbers, emails, and identity numbers
-//! - **Webhook Support**: Cryptographic webhook verification
-//! - **Installments**: Support for installment plan creation and management
+//! - **Webhook Support**: HMAC-SHA256 webhook verification
+//! - **Installments**: Card installment options and the installment table
 //!
 //! ## Module Organization
 //!
@@ -89,10 +67,14 @@ pub mod types;
 pub use client::TapsilatClient;
 pub use config::Config;
 pub use error::{Result, TapsilatError};
-pub use modules::{InstallmentModule, OrderModule, PaymentModule, Validators, WebhookModule};
+pub use modules::{
+    InstallmentModule, MarketplaceModule, OrderModule, OrganizationModule, PaymentModule,
+    SubmerchantModule, SubscriptionModule, TokenizationModule, Validators, VposModule,
+    WebhookModule,
+};
 pub use types::*;
 
-// Re-export installment types for convenience
+// Re-export the deprecated installment plan types for compatibility
 pub use modules::installments::{
     CreateInstallmentPlanRequest, Installment, InstallmentPlan, InstallmentStatus,
     RefundInstallmentRequest, UpdateInstallmentRequest,

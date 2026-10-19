@@ -1,6 +1,10 @@
+use crate::client::Query;
 use crate::error::Result;
 use crate::modules::validators::Validators;
-use crate::types::{ApiResponse, PaginatedResponse, PaginationParams};
+use crate::types::{
+    ApiResponse, CardInstallmentsRequest, CardInstallmentsResponse, InstallmentTableRequest,
+    InstallmentTableResponse, PaginatedResponse, PaginationParams,
+};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 
@@ -60,6 +64,11 @@ pub struct RefundInstallmentRequest {
     pub reason: Option<String>,
 }
 
+/// Card installment options and the installment table.
+///
+/// The installment plan methods are deprecated: the API has no installment plan routes.
+/// Use [`InstallmentModule::get_card_installments`] for card installment options and the
+/// order term methods for payment schedules.
 pub struct InstallmentModule {
     client: Arc<crate::client::TapsilatClient>,
 }
@@ -69,7 +78,38 @@ impl InstallmentModule {
         Self { client }
     }
 
+    /// Returns the installment options and commission rates for a card BIN and amount.
+    pub fn get_card_installments(
+        &self,
+        request: &CardInstallmentsRequest,
+    ) -> Result<CardInstallmentsResponse> {
+        let endpoint = Query::new()
+            .set("bin", &request.bin)
+            .set("amount", request.amount)
+            .set("currency", &request.currency)
+            .opt("is_three_d", request.is_three_d.then_some("true"))
+            .append_to("card/installments");
+        self.client.request::<(), _>("GET", &endpoint, None)
+    }
+
+    /// Returns installment options grouped by bank card program, with an interest-free
+    /// flag per row.
+    pub fn get_installment_table(
+        &self,
+        request: &InstallmentTableRequest,
+    ) -> Result<InstallmentTableResponse> {
+        let endpoint = Query::new()
+            .set("amount", request.amount)
+            .set("currency", &request.currency)
+            .opt("is_three_d", request.is_three_d.then_some("true"))
+            .append_to("card/installment-table");
+        self.client.request::<(), _>("GET", &endpoint, None)
+    }
+
     /// Creates an installment plan for an order
+    #[deprecated(
+        note = "the API has no installment plan routes; this request always fails. Use get_card_installments or the order term methods"
+    )]
     pub fn create_plan(&self, request: CreateInstallmentPlanRequest) -> Result<InstallmentPlan> {
         // Validate request
         self.validate_create_request(&request)?;
@@ -90,6 +130,9 @@ impl InstallmentModule {
     }
 
     /// Gets an installment plan by ID
+    #[deprecated(
+        note = "the API has no installment plan routes; this request always fails. Use get_card_installments or the order term methods"
+    )]
     pub fn get_plan(&self, plan_id: &str) -> Result<InstallmentPlan> {
         if plan_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
@@ -112,6 +155,9 @@ impl InstallmentModule {
     }
 
     /// Gets installment plans for an order
+    #[deprecated(
+        note = "the API has no installment plan routes; this request always fails. Use get_card_installments or the order term methods"
+    )]
     pub fn get_plans_by_order(&self, order_id: &str) -> Result<Vec<InstallmentPlan>> {
         if order_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
@@ -134,6 +180,9 @@ impl InstallmentModule {
     }
 
     /// Updates an installment
+    #[deprecated(
+        note = "the API has no installment plan routes; this request always fails. Use get_card_installments or the order term methods"
+    )]
     pub fn update_installment(
         &self,
         installment_id: &str,
@@ -165,6 +214,9 @@ impl InstallmentModule {
     }
 
     /// Cancels an installment plan
+    #[deprecated(
+        note = "the API has no installment plan routes; this request always fails. Use get_card_installments or the order term methods"
+    )]
     pub fn cancel_plan(&self, plan_id: &str) -> Result<InstallmentPlan> {
         if plan_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
@@ -187,6 +239,9 @@ impl InstallmentModule {
     }
 
     /// Refunds an installment
+    #[deprecated(
+        note = "the API has no installment plan routes; this request always fails. Use get_card_installments or the order term methods"
+    )]
     pub fn refund_installment(
         &self,
         installment_id: &str,
@@ -220,6 +275,9 @@ impl InstallmentModule {
     }
 
     /// Lists all installment plans with pagination
+    #[deprecated(
+        note = "the API has no installment plan routes; this request always fails. Use get_card_installments or the order term methods"
+    )]
     pub fn list_plans(
         &self,
         pagination: Option<PaginationParams>,

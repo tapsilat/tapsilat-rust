@@ -1,6 +1,10 @@
+use crate::client::{path_escape, Query};
 use crate::error::Result;
+use crate::modules::validators::Validators;
 use crate::types::{
-    ApiResponse, CreateOrderRequest, CreateOrderResponse, Order, RefundOrderRequest,
+    CreateOrderRequest, CreateOrderResponse, GetOrderPaymentsRequest, GetOrderPaymentsResponse,
+    Order, OrderChargeRequest, OrderChargeResponse, OrderDetail, OrderListFilter,
+    OrderSubmerchantListResponse, RefundOrderRequest,
 };
 use std::sync::Arc;
 
@@ -13,66 +17,125 @@ impl OrderModule {
         Self { client }
     }
 
-    /// Creates a new order
-    pub fn create(&self, request: CreateOrderRequest) -> Result<CreateOrderResponse> {
-        // Validation logic removed to simplify synchronization; rely on API or add later if needed.
-        let response = self
-            .client
-            .make_request("POST", "order/create", Some(&request))?;
-        serde_json::from_value(response).map_err(|e| {
-            crate::error::TapsilatError::ConfigError(format!(
-                "Failed to parse create order response: {}",
-                e
-            ))
-        })
-    }
-
-    /// Retrieves an order by ID
-    pub fn get(&self, reference_id: &str) -> Result<Order> {
-        let endpoint = format!("order/{}", reference_id);
-        let response = self.client.make_request::<()>("GET", &endpoint, None)?;
-        let api_response: ApiResponse<Order> = serde_json::from_value(response).map_err(|e| {
-            crate::error::TapsilatError::ConfigError(format!(
-                "Failed to parse order response: {}",
-                e
-            ))
-        })?;
-
-        match api_response.data {
-            Some(order) => Ok(order),
-            None => Err(crate::error::TapsilatError::InvalidResponse(
-                api_response.message.unwrap_or("No data".to_string()),
-            )),
+    /// Creates an order. The buyer's GSM number is cleaned and validated first, and the
+    /// checkout URL is filled from the created order when it can be read.
+    pub fn create(&self, mut request: CreateOrderRequest) -> Result<CreateOrderResponse> {
+        if let Some(gsm) = request.buyer.gsm_number.as_deref() {
+            if !gsm.is_empty() {
+                request.buyer.gsm_number = Some(Validators::validate_gsm_number(gsm)?);
+            }
         }
+
+        let mut response: CreateOrderResponse =
+            self.client
+                .request("POST", "order/create", Some(&request))?;
+
+        if let Some(reference_id) = response.reference_id.as_deref() {
+            if !reference_id.is_empty() {
+                // The order is created even when its checkout URL cannot be read
+                if let Ok(url) = self.get_checkout_url(reference_id) {
+                    response.checkout_url = Some(url);
+                }
+            }
+        }
+        Ok(response)
     }
 
-    /// Gets order status by ID
+    /// Retrieves an order by its reference ID
+    pub fn get(&self, reference_id: &str) -> Result<Order> {
+        let endpoint = format!("order/{}", path_escape(reference_id));
+        self.client.request::<(), _>("GET", &endpoint, None)
+    }
+
+    /// Retrieves an order by its conversation ID. The server fills a subset of the order
+    /// detail fields for this lookup.
+    pub fn get_by_conversation_id(&self, conversation_id: &str) -> Result<OrderDetail> {
+        let endpoint = format!("order/conversation/{}", path_escape(conversation_id));
+        self.client.request::<(), _>("GET", &endpoint, None)
+    }
+
+    /// Gets order status by reference ID; the response is `{"status": ...}`
     pub fn get_status(&self, reference_id: &str) -> Result<serde_json::Value> {
-        let endpoint = format!("order/{}/status", reference_id);
+        let endpoint = format!("order/{}/status", path_escape(reference_id));
         self.client.make_request::<()>("GET", &endpoint, None)
     }
 
-    /// Lists orders with optional pagination
+    /// Lists orders with pagination and an optional buyer filter
     pub fn list(
         &self,
         page: u32,
         per_page: u32,
         buyer_id: Option<String>,
     ) -> Result<serde_json::Value> {
-        let mut endpoint = "order/list".to_string();
-        let mut params = Vec::new();
-        params.push(format!("page={}", page));
-        params.push(format!("per_page={}", per_page));
+        self.list_with_filter(&OrderListFilter {
+            page,
+            per_page,
+            buyer_id,
+            ..Default::default()
+        })
+    }
 
-        if let Some(bid) = buyer_id {
-            params.push(format!("buyer_id={}", bid));
-        }
-
-        if !params.is_empty() {
-            endpoint = format!("{}?{}", endpoint, params.join("&"));
-        }
-
+    /// Lists orders with every filter the order list endpoint accepts. The response is
+    /// `{rows, total, page, per_page, total_pages}`.
+    pub fn list_with_filter(&self, filter: &OrderListFilter) -> Result<serde_json::Value> {
+        let endpoint = Query::new()
+            .set("page", filter.page)
+            .set("per_page", filter.per_page)
+            .opt("start_date", filter.start_date.as_deref())
+            .opt("end_date", filter.end_date.as_deref())
+            .opt("organization_id", filter.organization_id.as_deref())
+            .opt("conversation_id", filter.conversation_id.as_deref())
+            .opt(
+                "related_reference_id",
+                filter.related_reference_id.as_deref(),
+            )
+            .opt("buyer_id", filter.buyer_id.as_deref())
+            .opt("status", filter.status)
+            .append_to("order/list");
         self.client.make_request::<()>("GET", &endpoint, None)
+    }
+
+    /// Lists the submerchants available for orders.
+    pub fn list_submerchants(
+        &self,
+        page: u32,
+        per_page: u32,
+    ) -> Result<OrderSubmerchantListResponse> {
+        let endpoint = Query::new()
+            .set("page", page)
+            .set("per_page", per_page)
+            .append_to("order/submerchants");
+        self.client.request::<(), _>("GET", &endpoint, None)
+    }
+
+    /// Returns the payment details of an order.
+    pub fn get_payment_details(&self, reference_id: &str) -> Result<serde_json::Value> {
+        let endpoint = format!("order/{}/payment-details", path_escape(reference_id));
+        self.client.make_request::<()>("GET", &endpoint, None)
+    }
+
+    /// Returns the payment details of the order with the given conversation ID.
+    pub fn get_payment_details_by_conversation_id(
+        &self,
+        conversation_id: &str,
+    ) -> Result<serde_json::Value> {
+        let payload = serde_json::json!({ "conversation_id": conversation_id });
+        self.client
+            .make_request("POST", "order/payment-details", Some(&payload))
+    }
+
+    /// Lists the payments made against an order, with commission totals.
+    pub fn get_payments(
+        &self,
+        request: GetOrderPaymentsRequest,
+    ) -> Result<GetOrderPaymentsResponse> {
+        self.client
+            .request("POST", "order/payments", Some(&request))
+    }
+
+    /// Charges an order, for example with its saved card.
+    pub fn charge(&self, request: OrderChargeRequest) -> Result<OrderChargeResponse> {
+        self.client.request("POST", "order/charge", Some(&request))
     }
 
     /// Cancels an order
@@ -82,22 +145,10 @@ impl OrderModule {
         self.client.make_request("POST", endpoint, Some(&payload))
     }
 
-    /// Refunds an order (full or partial)
+    /// Refunds an order (full or partial); the response is `{status, message, is_success}`
     pub fn refund(&self, request: RefundOrderRequest) -> Result<serde_json::Value> {
         let endpoint = "order/refund";
-        let response = self.client.make_request("POST", endpoint, Some(&request))?;
-        let api_response: ApiResponse<serde_json::Value> = serde_json::from_value(response)
-            .map_err(|e| {
-                crate::error::TapsilatError::ConfigError(format!(
-                    "Failed to parse refund response: {}",
-                    e
-                ))
-            })?;
-
-        match api_response.data {
-            Some(v) => Ok(v),
-            None => Ok(serde_json::Value::Null),
-        }
+        self.client.make_request("POST", endpoint, Some(&request))
     }
 
     /// Refunds all items in an order
@@ -110,11 +161,15 @@ impl OrderModule {
     /// Gets checkout URL for an order via get_order
     pub fn get_checkout_url(&self, reference_id: &str) -> Result<String> {
         let order = self.get(reference_id)?;
-        order.checkout_url.ok_or_else(|| {
-            crate::error::TapsilatError::InvalidResponse("Checkout URL not found".to_string())
-        })
+        order
+            .checkout_url
+            .filter(|url| !url.is_empty())
+            .ok_or_else(|| {
+                crate::error::TapsilatError::InvalidResponse("Checkout URL not found".to_string())
+            })
     }
 
+    /// Adds a payment term to an existing order; `order_id` is the order's ID.
     pub fn create_term(
         &self,
         request: crate::types::OrderPaymentTermCreateDTO,
@@ -123,6 +178,7 @@ impl OrderModule {
         self.client.make_request("POST", endpoint, Some(&request))
     }
 
+    /// Replaces a payment term with the supplied values.
     pub fn update_term(
         &self,
         request: crate::types::OrderPaymentTermUpdateDTO,
@@ -131,6 +187,7 @@ impl OrderModule {
         self.client.make_request("PATCH", endpoint, Some(&request))
     }
 
+    /// Removes a payment term; `order_id` is the order's ID, not its reference ID.
     pub fn delete_term(
         &self,
         order_id: &str,
@@ -142,6 +199,7 @@ impl OrderModule {
         self.client.make_request("DELETE", endpoint, Some(&payload))
     }
 
+    /// Refunds a payment made against a payment term.
     pub fn refund_term(
         &self,
         request: crate::types::OrderTermRefundRequest,
@@ -150,6 +208,9 @@ impl OrderModule {
         self.client.make_request("POST", endpoint, Some(&request))
     }
 
+    #[deprecated(
+        note = "the API has no term terminate route; this request always fails. Use terminate or delete_term"
+    )]
     pub fn terminate_term(
         &self,
         term_reference_id: &str,
@@ -167,8 +228,11 @@ impl OrderModule {
         self.client.make_request("POST", endpoint, Some(&payload))
     }
 
+    /// Returns a payment term by its term reference ID.
     pub fn get_term(&self, term_reference_id: &str) -> Result<serde_json::Value> {
-        let endpoint = format!("order/term?term_reference_id={}", term_reference_id);
+        let endpoint = Query::new()
+            .set("term_reference_id", term_reference_id)
+            .append_to("order/term");
         self.client.make_request::<()>("GET", &endpoint, None)
     }
 
@@ -178,6 +242,7 @@ impl OrderModule {
         self.client.make_request("POST", endpoint, Some(&payload))
     }
 
+    /// Asks the server to resend the order's callback.
     pub fn manual_callback(
         &self,
         reference_id: &str,
@@ -198,6 +263,7 @@ impl OrderModule {
         self.client.make_request("POST", endpoint, Some(&payload))
     }
 
+    /// Links an order to a related reference ID.
     pub fn related_update(
         &self,
         reference_id: &str,
