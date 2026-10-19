@@ -40,6 +40,7 @@ fn test_order_creation_request() {
             quantity_unit: None,
             sub_merchant_key: None,
             sub_merchant_price: None,
+            ..Default::default()
         }]),
         buyer: tapsilat::types::CreateBuyerRequest {
             name: "John".to_string(),
@@ -52,6 +53,7 @@ fn test_order_creation_request() {
             city: None,
             country: None,
             zip_code: None,
+            ..Default::default()
         },
         metadata: None,
         billing_address: None,
@@ -76,6 +78,7 @@ fn test_order_creation_request() {
         tax_amount: None,
         three_d_force: None,
         consents: None,
+        ..Default::default()
     };
 
     // Should be valid

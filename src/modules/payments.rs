@@ -6,6 +6,9 @@ use crate::types::{
 };
 use std::sync::Arc;
 
+/// Deprecated: the API has no `/payments` routes, so every method fails. Use the order
+/// methods, such as [`crate::modules::OrderModule::get_payments`] and
+/// [`crate::modules::OrderModule::charge`].
 pub struct PaymentModule {
     client: Arc<crate::client::TapsilatClient>,
 }
@@ -15,6 +18,9 @@ impl PaymentModule {
         Self { client }
     }
 
+    #[deprecated(
+        note = "the API has no /payments routes; this request always fails. Use the order methods"
+    )]
     pub fn create(&self, request: CreatePaymentRequest) -> Result<PaymentResponse> {
         // Validate request
         Validators::validate_amount(request.amount)?;
@@ -34,6 +40,9 @@ impl PaymentModule {
         }
     }
 
+    #[deprecated(
+        note = "the API has no /payments routes; this request always fails. Use the order methods"
+    )]
     pub fn get(&self, payment_id: &str) -> Result<Payment> {
         if payment_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(
@@ -55,6 +64,9 @@ impl PaymentModule {
         }
     }
 
+    #[deprecated(
+        note = "the API has no /payments routes; this request always fails. Use the order methods"
+    )]
     pub fn list(&self, pagination: Option<PaginationParams>) -> Result<PaginatedResponse<Payment>> {
         let mut endpoint = "payments".to_string();
 
@@ -90,6 +102,9 @@ impl PaymentModule {
         }
     }
 
+    #[deprecated(
+        note = "the API has no /payments routes; this request always fails. Use the order methods"
+    )]
     pub fn cancel(&self, payment_id: &str) -> Result<Payment> {
         if payment_id.is_empty() {
             return Err(crate::error::TapsilatError::ValidationError(

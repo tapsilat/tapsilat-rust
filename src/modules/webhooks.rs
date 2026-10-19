@@ -1,6 +1,18 @@
 use crate::error::{Result, TapsilatError};
 use crate::types::{WebhookEvent, WebhookVerificationConfig, WebhookVerificationResult};
+use hmac::{Hmac, KeyInit, Mac};
+use sha2::Sha256;
 use std::time::{SystemTime, UNIX_EPOCH};
+
+fn decode_hex(value: &str) -> Option<Vec<u8>> {
+    if !value.len().is_multiple_of(2) {
+        return None;
+    }
+    (0..value.len())
+        .step_by(2)
+        .map(|i| u8::from_str_radix(value.get(i..i + 2)?, 16).ok())
+        .collect()
+}
 
 pub struct WebhookModule;
 
@@ -54,30 +66,35 @@ impl WebhookModule {
         })
     }
 
-    /// Verifies webhook signature using HMAC-SHA256
+    /// Verifies a hex HMAC-SHA256 signature of the payload, with or without the
+    /// "sha256=" prefix, in constant time.
     fn verify_signature(payload: &str, signature: &str, secret: &str) -> Result<bool> {
-        // Remove 'sha256=' prefix if present
+        let signature = signature.trim();
         let signature = signature.strip_prefix("sha256=").unwrap_or(signature);
+        let Some(expected) = decode_hex(signature) else {
+            return Ok(false);
+        };
 
-        // Create expected signature
-        let expected_signature = Self::create_signature(payload, secret)?;
-
-        // Compare signatures (constant time comparison would be better for production)
-        Ok(signature == expected_signature)
+        let mut mac = Self::mac(secret)?;
+        mac.update(payload.as_bytes());
+        Ok(mac.verify_slice(&expected).is_ok())
     }
 
-    /// Creates HMAC-SHA256 signature
-    fn create_signature(payload: &str, secret: &str) -> Result<String> {
-        // This is a simplified implementation
-        // In a real implementation, you would use a proper HMAC-SHA256 library
-        use std::collections::hash_map::DefaultHasher;
-        use std::hash::{Hash, Hasher};
+    /// Creates the hex HMAC-SHA256 signature of the payload, without the "sha256=" prefix.
+    pub fn create_signature(payload: &str, secret: &str) -> Result<String> {
+        let mut mac = Self::mac(secret)?;
+        mac.update(payload.as_bytes());
+        Ok(mac
+            .finalize()
+            .into_bytes()
+            .iter()
+            .map(|b| format!("{:02x}", b))
+            .collect())
+    }
 
-        let mut hasher = DefaultHasher::new();
-        format!("{}{}", secret, payload).hash(&mut hasher);
-        let hash = hasher.finish();
-
-        Ok(format!("{:x}", hash))
+    fn mac(secret: &str) -> Result<Hmac<Sha256>> {
+        <Hmac<Sha256> as KeyInit>::new_from_slice(secret.as_bytes())
+            .map_err(|e| TapsilatError::ValidationError(format!("Invalid webhook secret: {}", e)))
     }
 
     /// Verifies webhook timestamp
@@ -110,17 +127,13 @@ impl WebhookModule {
         Ok(())
     }
 
-    /// Parses ISO 8601 timestamp to Unix timestamp
-    fn parse_iso8601_timestamp(_timestamp: &str) -> Result<u64> {
-        // This is a simplified parser
-        // In production, use a proper datetime parsing library like chrono
-
-        // For now, just return current timestamp as fallback
-        // TODO: Implement proper ISO 8601 parsing
-        SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .map_err(|e| TapsilatError::InvalidResponse(format!("Timestamp parsing error: {}", e)))
-            .map(|d| d.as_secs())
+    /// Parses an RFC3339 timestamp to a Unix timestamp
+    fn parse_iso8601_timestamp(timestamp: &str) -> Result<u64> {
+        let parsed = chrono::DateTime::parse_from_rfc3339(timestamp).map_err(|e| {
+            TapsilatError::InvalidResponse(format!("Timestamp parsing error: {}", e))
+        })?;
+        u64::try_from(parsed.timestamp())
+            .map_err(|_| TapsilatError::InvalidResponse("Timestamp is before 1970".to_string()))
     }
 
     /// Utility method to construct webhook verification config
@@ -146,6 +159,40 @@ mod tests {
 
         assert_eq!(config.secret, "test_secret");
         assert_eq!(config.tolerance_seconds, Some(300));
+    }
+
+    #[test]
+    fn test_signature_is_hmac_sha256() {
+        // RFC 4231 test case 2
+        let signature =
+            WebhookModule::create_signature("what do ya want for nothing?", "Jefe").unwrap();
+        assert_eq!(
+            signature,
+            "5bdcc146bf60754e6a042426089575c75a003f089d2739839dec58b964ec3843"
+        );
+        assert!(WebhookModule::verify_webhook(
+            "what do ya want for nothing?",
+            &format!("sha256={}", signature),
+            "Jefe"
+        )
+        .unwrap());
+        assert!(WebhookModule::verify_webhook(
+            "what do ya want for nothing?",
+            &signature.to_uppercase(),
+            "Jefe"
+        )
+        .unwrap());
+        assert!(!WebhookModule::verify_webhook("tampered", &signature, "Jefe").unwrap());
+        assert!(!WebhookModule::verify_webhook("payload", "sha256=zz", "Jefe").unwrap());
+    }
+
+    #[test]
+    fn test_timestamp_parsing() {
+        assert_eq!(
+            WebhookModule::parse_iso8601_timestamp("2023-01-01T00:00:00Z").unwrap(),
+            1672531200
+        );
+        assert!(WebhookModule::parse_iso8601_timestamp("not a date").is_err());
     }
 
     #[test]

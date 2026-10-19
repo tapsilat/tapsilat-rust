@@ -62,6 +62,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         city: Some("Istanbul".to_string()),
         country: Some("Turkey".to_string()),
         zip_code: None,
+        ..Default::default()
     };
 
     let billing_address = BillingAddressDTO {
@@ -78,6 +79,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         title: None,
         vat_number: None,
         zip_code: None,
+        ..Default::default()
     };
 
     let basket_item = BasketItemDTO {
@@ -99,6 +101,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         quantity_unit: None,
         sub_merchant_key: None,
         sub_merchant_price: None,
+        ..Default::default()
     };
 
     let order_request = CreateOrderRequest {
@@ -132,6 +135,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         tax_amount: None,
         three_d_force: None,
         consents: None,
+        ..Default::default()
     };
 
     println!("📦 Creating Order...");
@@ -215,6 +219,7 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         payment_date: None,
         price_option: None,
         success_url: None,
+        ..Default::default()
     };
 
     match client.create_subscription(sub_request) {
@@ -231,18 +236,15 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         Err(e) => println!("   ❌ Subscription Creation Failed: {}", e),
     }
 
-    // 7. Term Management (Terminating a term)
-    println!("\n=== 7. TERM MANAGEMENT (Termination) ===");
-    // Attempting on a dummy term ID, expected to fail or 404, but tests the method signature
-    match client.terminate_order_term("non_existent_term_id", Some("Test Reason".to_string())) {
+    // 7. Term Management (reading a term)
+    println!("\n=== 7. TERM MANAGEMENT ===");
+    // Attempting on a dummy term reference ID, expected to fail, but tests the method signature
+    match client.get_order_term("non_existent_term_reference_id") {
         Ok(resp) => println!(
-            "   ✅ Term Terminated (Unexpected success for dummy ID): {:?}",
+            "   ✅ Term found (Unexpected success for dummy ID): {:?}",
             resp
         ),
-        Err(e) => println!(
-            "   ✅ Term Termination Failed as expected (dummy ID): {}",
-            e
-        ),
+        Err(e) => println!("   ✅ Term lookup failed as expected (dummy ID): {}", e),
     }
 
     // 8. API Health
