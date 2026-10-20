@@ -20,4 +20,6 @@ pub use subscriptions::SubscriptionModule;
 pub use tokenization::TokenizationModule;
 pub use validators::Validators;
 pub use vpos::VposModule;
-pub use webhooks::WebhookModule;
+pub use webhooks::{
+    WebhookModule, WebhookVerifyOptions, DEFAULT_WEBHOOK_TOLERANCE, WEBHOOK_SIGNATURE_HEADER,
+};

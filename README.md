@@ -87,7 +87,7 @@ println!("Order status: {}", status["status"]);
 - Saved cards (tokenization)
 - Subscriptions
 - Marketplace sellers, payouts, payout operations and policies (API v2)
-- HMAC-SHA256 webhook verification
+- Webhook signature verification (`Tapsilat-Signature`), callback parsing and order statuses
 - GSM, installment, email, amount and identity number validation
 
 ---
@@ -339,20 +339,73 @@ marketplace.create_approval_policy(MarketplaceApprovalPolicyInput {
 
 ### Webhook Handling
 
-Signatures are hex HMAC-SHA256 digests of the raw payload, with or without the
-`sha256=` prefix, and are compared in constant time.
+#### Verify Webhook Signature
+
+Tapsilat signs every callback it sends to your callback URLs, and to an order's
+`payment_success_url` and `payment_failure_url`, with the webhook secret from the panel's
+callback settings. The `Tapsilat-Signature` header looks like `t=1726480000,v1=5257a8…`:
+`v1` is the hex HMAC-SHA256 of the timestamp, a dot and the raw body.
+
+`WebhookModule::verify_webhook_with` checks it in constant time and rejects a timestamp more
+than 5 minutes from the server clock, so a captured callback cannot be replayed. Pass the raw
+body, not re-encoded JSON.
 
 ```rust
-use tapsilat::WebhookModule;
+use http::HeaderMap; // axum::http::HeaderMap, or your framework's header map
+use tapsilat::{WebhookEvent, WebhookModule, WebhookVerifyOptions, WEBHOOK_SIGNATURE_HEADER};
 
-fn handle_webhook(payload: &str, signature: &str, secret: &str) -> Result<(), Box<dyn std::error::Error>> {
-    if !WebhookModule::verify_webhook(payload, signature, secret)? {
-        return Err("Invalid webhook signature".into());
+/// `body` is the raw request body. Returns the HTTP status to answer with.
+fn handle_callback(headers: &HeaderMap, body: &[u8], secret: &str) -> u16 {
+    let signature = headers
+        .get(WEBHOOK_SIGNATURE_HEADER) // "Tapsilat-Signature"
+        .and_then(|value| value.to_str().ok())
+        .unwrap_or_default();
+    let options = WebhookVerifyOptions::default();
+    if !WebhookModule::verify_webhook_with(body, signature, secret, &options) {
+        return 400;
     }
-    let event = WebhookModule::parse_webhook(payload)?;
-    println!("Received {:?}", event.event_type);
-    Ok(())
+
+    let Ok(event) = WebhookEvent::from_payload(body) else {
+        return 400;
+    };
+    println!(
+        "{:?} callback for order {:?} ({:?}): {:?}",
+        event.event_type,        // Some("order_lite") (the default), "order", "order_payment_detail", ...
+        event.reference_id(),    // the order's reference ID, whatever the callback type
+        event.conversation_id(),
+        event.status(),          // e.g. Some(OrderStatus::Paid), when the callback type carries a status
+    );
+
+    if event.is_paid() {
+        // fulfil the order
+    }
+    200
 }
+```
+
+`WebhookModule::verify_webhook(payload, signature, secret)` runs the same check on a `&str`
+body with the default options. A different tolerance in seconds can be set with
+`WebhookVerifyOptions::default().with_tolerance(600)` (`0` disables the timestamp check), and
+`with_now(unix_seconds)` compares against a fixed time in tests. `verify_webhook_advanced`
+also reports why a signature was rejected. A bare hex HMAC of the body, with or without a
+`sha256=` prefix, is still accepted for signatures made the way earlier SDK versions
+documented.
+
+#### Order Statuses
+
+`OrderStatus` has the numeric status codes that callbacks and order details carry, the names
+`get_order_status` returns, and the groups most integrations need:
+
+```rust
+use tapsilat::OrderStatus;
+
+let status: OrderStatus = "Waiting for payment".parse()?; // also "7"; OrderStatus::from_code(7)
+
+status.code();        // 7
+status.name();        // "Waiting for payment"
+status.is_paid();     // Paid, Completed, Sub merchant payment approved
+status.is_failed();   // Cancelled, Fraud, Rejected, Failure, Expired, Terminated
+status.is_refunded(); // Refunded, Partially refunded
 ```
 
 ### Error Handling

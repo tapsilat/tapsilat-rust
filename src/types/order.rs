@@ -1,5 +1,8 @@
-use serde::{Deserialize, Serialize};
+use crate::error::TapsilatError;
+use serde::{Deserialize, Deserializer, Serialize, Serializer};
 use std::collections::HashMap;
+use std::fmt;
+use std::str::FromStr;
 
 /// An order as returned by the order detail endpoints.
 ///
@@ -97,22 +100,222 @@ pub struct OrderItem {
     pub description: Option<String>,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+/// An order status. Callbacks and order details carry its numeric code, and
+/// GET /order/{reference_id}/status returns its name.
+///
+/// A status can be read from a code ([`OrderStatus::from_code`]), from a numeric string
+/// such as order_lite callbacks send or a name such as "Paid", case-insensitively
+/// ([`str::parse`]), or from a JSON value holding either ([`OrderStatus::from_json`]).
+/// It serializes as its code and deserializes from any of these forms.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum OrderStatus {
-    #[serde(rename = "pending")]
-    Pending,
-    #[serde(rename = "processing")]
-    Processing,
-    #[serde(rename = "completed")]
-    Completed,
-    #[serde(rename = "failed")]
-    Failed,
-    #[serde(rename = "cancelled")]
-    Cancelled,
-    #[serde(rename = "refunded")]
-    Refunded,
-    #[serde(rename = "partially_refunded")]
-    PartiallyRefunded,
+    Received = 1,
+    Unpaid = 2,
+    Paid = 3,
+    Processing = 4,
+    Shipped = 5,
+    OnHold = 6,
+    WaitingForPayment = 7,
+    Cancelled = 8,
+    Completed = 9,
+    Refunded = 10,
+    Fraud = 11,
+    Rejected = 12,
+    Failure = 13,
+    Retrying = 14,
+    PartiallyRefunded = 15,
+    SubMerchantPaymentApproved = 16,
+    SubMerchantPaymentDisapproved = 17,
+    SubMerchantPaymentErrored = 18,
+    StillHasUnpaidInstallments = 19,
+    StillHasUnpaidTerms = 20,
+    Expired = 21,
+    StillHasUnpaidSubMerchantPayments = 22,
+    PartiallyPaid = 23,
+    Terminated = 24,
+    CardTokenization = 25,
+    PreAuthorized = 26,
+    Disputed = 27,
+    PartiallyDisputed = 28,
+    Suspect = 29,
+}
+
+impl OrderStatus {
+    /// Every status, in code order.
+    pub const ALL: [OrderStatus; 29] = [
+        Self::Received,
+        Self::Unpaid,
+        Self::Paid,
+        Self::Processing,
+        Self::Shipped,
+        Self::OnHold,
+        Self::WaitingForPayment,
+        Self::Cancelled,
+        Self::Completed,
+        Self::Refunded,
+        Self::Fraud,
+        Self::Rejected,
+        Self::Failure,
+        Self::Retrying,
+        Self::PartiallyRefunded,
+        Self::SubMerchantPaymentApproved,
+        Self::SubMerchantPaymentDisapproved,
+        Self::SubMerchantPaymentErrored,
+        Self::StillHasUnpaidInstallments,
+        Self::StillHasUnpaidTerms,
+        Self::Expired,
+        Self::StillHasUnpaidSubMerchantPayments,
+        Self::PartiallyPaid,
+        Self::Terminated,
+        Self::CardTokenization,
+        Self::PreAuthorized,
+        Self::Disputed,
+        Self::PartiallyDisputed,
+        Self::Suspect,
+    ];
+
+    /// Statuses of an order whose payment was captured.
+    pub const PAID_STATUSES: [OrderStatus; 3] = [
+        Self::Paid,
+        Self::Completed,
+        Self::SubMerchantPaymentApproved,
+    ];
+
+    /// Statuses of an order that will not be paid.
+    pub const FAILED_STATUSES: [OrderStatus; 6] = [
+        Self::Cancelled,
+        Self::Fraud,
+        Self::Rejected,
+        Self::Failure,
+        Self::Expired,
+        Self::Terminated,
+    ];
+
+    /// Statuses of an order whose payment was refunded in full or in part.
+    pub const REFUNDED_STATUSES: [OrderStatus; 2] = [Self::Refunded, Self::PartiallyRefunded];
+
+    /// The numeric status code, such as 3 for [`OrderStatus::Paid`].
+    pub fn code(self) -> u8 {
+        self as u8
+    }
+
+    /// The status name that GET /order/{reference_id}/status returns, such as "Paid".
+    pub fn name(self) -> &'static str {
+        match self {
+            Self::Received => "Received",
+            Self::Unpaid => "Unpaid",
+            Self::Paid => "Paid",
+            Self::Processing => "Processing",
+            Self::Shipped => "Shipped",
+            Self::OnHold => "On hold",
+            Self::WaitingForPayment => "Waiting for payment",
+            Self::Cancelled => "Cancelled",
+            Self::Completed => "Completed",
+            Self::Refunded => "Refunded",
+            Self::Fraud => "Fraud",
+            Self::Rejected => "Rejected",
+            Self::Failure => "Failure",
+            Self::Retrying => "Retrying",
+            Self::PartiallyRefunded => "Partially refunded",
+            Self::SubMerchantPaymentApproved => "Sub merchant payment approved",
+            Self::SubMerchantPaymentDisapproved => "Sub merchant payment disapproved",
+            Self::SubMerchantPaymentErrored => "Sub merchant payment errored",
+            Self::StillHasUnpaidInstallments => "Still has unpaid installments",
+            Self::StillHasUnpaidTerms => "Still has unpaid terms",
+            Self::Expired => "Expired",
+            Self::StillHasUnpaidSubMerchantPayments => "Still has unpaid sub merchant payments",
+            Self::PartiallyPaid => "Partially Paid",
+            Self::Terminated => "Terminated",
+            Self::CardTokenization => "Card Tokenization",
+            Self::PreAuthorized => "Pre Authorized",
+            Self::Disputed => "Disputed",
+            Self::PartiallyDisputed => "Partially disputed",
+            Self::Suspect => "Suspect",
+        }
+    }
+
+    /// Returns the status with this code, or `None` when no status has it.
+    pub fn from_code(code: impl Into<i64>) -> Option<Self> {
+        let index = usize::try_from(code.into().checked_sub(1)?).ok()?;
+        Self::ALL.get(index).copied()
+    }
+
+    /// Returns the status with this name, compared case-insensitively.
+    pub fn from_name(name: &str) -> Option<Self> {
+        let name = name.trim();
+        Self::ALL
+            .into_iter()
+            .find(|status| status.name().eq_ignore_ascii_case(name))
+    }
+
+    /// Reads a status from a JSON number such as `3` (or `3.0`), a numeric string such as
+    /// `"3"`, or a name such as `"Paid"`. Returns `None` for anything else.
+    pub fn from_json(value: &serde_json::Value) -> Option<Self> {
+        match value {
+            serde_json::Value::Number(number) => match number.as_i64() {
+                Some(code) => Self::from_code(code),
+                None => number
+                    .as_f64()
+                    .filter(|code| code.fract() == 0.0 && (1.0..=29.0).contains(code))
+                    .and_then(|code| Self::from_code(code as i64)),
+            },
+            serde_json::Value::String(text) => text.parse().ok(),
+            _ => None,
+        }
+    }
+
+    /// Whether the order's payment was captured: Paid, Completed or Sub merchant payment approved.
+    pub fn is_paid(self) -> bool {
+        Self::PAID_STATUSES.contains(&self)
+    }
+
+    /// Whether the order will not be paid: Cancelled, Fraud, Rejected, Failure, Expired or
+    /// Terminated.
+    pub fn is_failed(self) -> bool {
+        Self::FAILED_STATUSES.contains(&self)
+    }
+
+    /// Whether the order's payment was refunded: Refunded or Partially refunded.
+    pub fn is_refunded(self) -> bool {
+        Self::REFUNDED_STATUSES.contains(&self)
+    }
+}
+
+impl fmt::Display for OrderStatus {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.name())
+    }
+}
+
+impl FromStr for OrderStatus {
+    type Err = TapsilatError;
+
+    /// Parses a numeric code such as "3" or a status name such as "Paid", case-insensitively.
+    fn from_str(value: &str) -> Result<Self, Self::Err> {
+        let trimmed = value.trim();
+        let status = if !trimmed.is_empty() && trimmed.bytes().all(|b| b.is_ascii_digit()) {
+            trimmed.parse::<i64>().ok().and_then(Self::from_code)
+        } else {
+            Self::from_name(trimmed)
+        };
+        status.ok_or_else(|| {
+            TapsilatError::ValidationError(format!("Unknown order status: {}", value))
+        })
+    }
+}
+
+impl Serialize for OrderStatus {
+    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
+        serializer.serialize_u8(self.code())
+    }
+}
+
+impl<'de> Deserialize<'de> for OrderStatus {
+    fn deserialize<D: Deserializer<'de>>(deserializer: D) -> Result<Self, D::Error> {
+        let value = serde_json::Value::deserialize(deserializer)?;
+        Self::from_json(&value)
+            .ok_or_else(|| serde::de::Error::custom(format!("{} is not an order status", value)))
+    }
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
