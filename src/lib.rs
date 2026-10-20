@@ -47,7 +47,7 @@
 //! - **Error Handling**: Robust error types with detailed context
 //! - **Flexible API**: Both direct client methods and modular interfaces
 //! - **Validation**: Built-in validators for Turkish phone numbers, emails, and identity numbers
-//! - **Webhook Support**: HMAC-SHA256 webhook verification
+//! - **Webhook Support**: `Tapsilat-Signature` verification, callback parsing and order statuses
 //! - **Installments**: Card installment options and the installment table
 //!
 //! ## Module Organization
@@ -70,7 +70,7 @@ pub use error::{Result, TapsilatError};
 pub use modules::{
     InstallmentModule, MarketplaceModule, OrderModule, OrganizationModule, PaymentModule,
     SubmerchantModule, SubscriptionModule, TokenizationModule, Validators, VposModule,
-    WebhookModule,
+    WebhookModule, WebhookVerifyOptions, DEFAULT_WEBHOOK_TOLERANCE, WEBHOOK_SIGNATURE_HEADER,
 };
 pub use types::*;
 

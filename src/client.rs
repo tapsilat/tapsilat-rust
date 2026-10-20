@@ -490,6 +490,9 @@ impl TapsilatClient {
     }
 
     // Webhook Operations
+
+    /// Verifies the `Tapsilat-Signature` header of a callback; see
+    /// [`WebhookModule::verify_webhook_with`].
     pub fn verify_webhook(&self, payload: &str, signature: &str, secret: &str) -> Result<bool> {
         WebhookModule::verify_webhook(payload, signature, secret)
     }
