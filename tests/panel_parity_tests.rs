@@ -980,7 +980,7 @@ fn validation_errors_expose_code_and_field_errors() {
 }
 
 #[test]
-fn grpc_errors_use_the_error_field() {
+fn error_string_with_numeric_code_is_parsed() {
     let mut server = Server::new();
     let _mock = json_mock(
         &mut server,
