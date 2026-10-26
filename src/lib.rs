@@ -7,7 +7,7 @@
 //! The Tapsilat SDK provides a type-safe, ergonomic interface for integrating with the
 //! Tapsilat API. It covers orders and payment terms, card installments, organization
 //! settings, submerchants, virtual POS, saved cards, subscriptions, the marketplace
-//! (API v2), webhook verification and validation utilities.
+//! (API v2), Tapsilat Elements sessions, webhook verification and validation utilities.
 //!
 //! ## Quick Start
 //!
@@ -49,6 +49,7 @@
 //! - **Validation**: Built-in validators for Turkish phone numbers, emails, and identity numbers
 //! - **Webhook Support**: `Tapsilat-Signature` verification, callback parsing and order statuses
 //! - **Installments**: Card installment options and the installment table
+//! - **Elements**: Sessions for the native Android and iOS card sheet
 //!
 //! ## Module Organization
 //!
@@ -68,9 +69,10 @@ pub use client::TapsilatClient;
 pub use config::Config;
 pub use error::{Result, TapsilatError};
 pub use modules::{
-    InstallmentModule, MarketplaceModule, OrderModule, OrganizationModule, PaymentModule,
-    SubmerchantModule, SubscriptionModule, TokenizationModule, Validators, VposModule,
-    WebhookModule, WebhookVerifyOptions, DEFAULT_WEBHOOK_TOLERANCE, WEBHOOK_SIGNATURE_HEADER,
+    ElementsModule, InstallmentModule, MarketplaceModule, OrderModule, OrganizationModule,
+    PaymentModule, SubmerchantModule, SubscriptionModule, TokenizationModule, Validators,
+    VposModule, WebhookModule, WebhookVerifyOptions, DEFAULT_WEBHOOK_TOLERANCE,
+    WEBHOOK_SIGNATURE_HEADER,
 };
 pub use types::*;
 

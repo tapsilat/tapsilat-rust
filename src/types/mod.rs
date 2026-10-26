@@ -1,5 +1,6 @@
 pub mod buyer;
 pub mod common;
+pub mod elements;
 pub mod marketplace;
 pub mod order;
 pub mod organization;
@@ -10,6 +11,7 @@ pub mod webhook;
 
 pub use buyer::{Address, Buyer, CreateAddressRequest, CreateBuyerRequest};
 pub use common::*;
+pub use elements::*;
 pub use marketplace::*;
 pub use order::*;
 pub use organization::*;

@@ -1,3 +1,4 @@
+pub mod elements;
 pub mod installments;
 pub mod marketplace;
 pub mod orders;
@@ -10,6 +11,7 @@ pub mod validators;
 pub mod vpos;
 pub mod webhooks;
 
+pub use elements::ElementsModule;
 pub use installments::InstallmentModule;
 pub use marketplace::MarketplaceModule;
 pub use orders::OrderModule;

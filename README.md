@@ -85,6 +85,7 @@ println!("Order status: {}", status["status"]);
 - Submerchants, settlement approval and payout events
 - Virtual POS and VPOS submerchants
 - Saved cards (tokenization)
+- Tapsilat Elements sessions for the native Android and iOS card sheet
 - Subscriptions
 - Marketplace sellers, payouts, payout operations and policies (API v2)
 - Webhook signature verification (`Tapsilat-Signature`), callback parsing and order statuses
@@ -306,6 +307,55 @@ let cards = client.tokenization().list_saved_cards(1, 10)?;
 client.tokenization().delete_saved_card(&cards.rows[0].id)?;
 ```
 
+### Tapsilat Elements Sessions
+
+Tapsilat Elements is the native Android and iOS card sheet. Your backend creates a session
+with its secret API key and passes only the session's `client_secret` to the app, which opens
+the sheet with it. Card data goes from the sheet to Tapsilat encrypted and never reaches your
+backend.
+
+```rust
+use tapsilat::{ElementsSession, ElementsSessionCreateRequest};
+
+let created = client.create_elements_session(ElementsSessionCreateRequest {
+    purpose: ElementsSession::PURPOSE_PAY.to_string(),
+    order_reference_id: Some("reference-id".to_string()),
+    save_card: true,
+    ..Default::default()
+})?;
+let session_id = created.session.id.clone().unwrap_or_default();
+// Send session_id and created.client_secret to your app. Do not log or store the secret.
+
+// Later, read the outcome on your backend instead of trusting the app
+let outcome = client.get_elements_session(&session_id)?;
+if outcome.status.as_deref() == Some(ElementsSession::STATUS_SUCCEEDED) {
+    // fulfil the order; outcome.card holds the brand, last4 and expiry
+}
+
+// Cancel a session that is still waiting for a card
+client.cancel_elements_session(&session_id)?;
+```
+
+- `create_elements_session(request) -> Result<ElementsSessionWithSecret>`: `POST /elements/sessions`
+- `get_elements_session(id) -> Result<ElementsSession>`: `GET /elements/sessions/{id}`
+- `cancel_elements_session(id) -> Result<ElementsSession>`: `POST /elements/sessions/{id}/cancel`
+
+The same calls are available as `client.elements().create_session(request)`,
+`get_session(id)` and `cancel_session(id)`.
+
+A `pay` session needs `order_reference_id`. A `tokenize` session saves a card for `user_id`,
+with `mode` set to `ElementsSessionCreateRequest::MODE_SECURE` (3D Secure), `MODE_HALF_SECURE`
+or `MODE_NON_SECURE`. Cancelling a session that is confirming or has completed returns it
+unchanged.
+
+`status`, `purpose` and the card `brand` are strings, so values added later still decode;
+compare them with the `ElementsSession::STATUS_*`, `ElementsSession::PURPOSE_*` and
+`ElementsCardSummary::BRAND_*` constants. Timestamps are RFC 3339 strings.
+
+The client secret is returned only by `create_elements_session`. `ElementsSessionWithSecret`
+prints it as `[redacted]` with `{:?}`, and serializing it with `serde_json` keeps it, so you
+can still send the session to the app.
+
 ### Marketplace (API v2)
 
 Seller and payout revisions are opaque strings. Send them back exactly as received.
@@ -411,15 +461,20 @@ status.is_refunded(); // Refunded, Partially refunded
 ### Error Handling
 
 API errors carry the HTTP status, the body's `status`, `code` and message, any field
-errors, and the raw body. A response that is not JSON, such as an HTML page from a wrong
-base URL, is also reported as an `ApiError`.
+errors, whether the request can be retried, and the raw body. A response that is not JSON,
+such as an HTML page from a wrong base URL, is also reported as an `ApiError`.
+
+Elements routes nest the error as
+`{"error": {"code": "session_not_found", "message": "...", "retryable": false}}`; `code`,
+`message` and `retryable` are read from that object. `retryable` is `false` when the body does
+not say.
 
 ```rust
 use tapsilat::TapsilatError;
 
 match client.cancel_order("reference-id") {
-    Err(TapsilatError::ApiError { status_code, code, message, errors, .. }) => {
-        eprintln!("{} [{:?}] {} {:?}", status_code, code, message, errors);
+    Err(TapsilatError::ApiError { status_code, code, message, errors, retryable, .. }) => {
+        eprintln!("{} [{:?}] {} {:?} retryable={}", status_code, code, message, errors, retryable);
     }
     Err(other) => eprintln!("{}", other),
     Ok(response) => println!("{}", response),
