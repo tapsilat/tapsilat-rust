@@ -223,7 +223,7 @@ mod tests {
     use crate::types::OrderStatus;
     use serde_json::json;
 
-    // An order_lite callback signed the way admin's monosign.SignWebhook signs it; the
+    // An order_lite callback and a known-good Tapsilat-Signature for this body and secret; the
     // expected signature was computed with openssl, independently of the SDK.
     const PAYLOAD: &str = concat!(
         r#"{"data":{"id":"5f0c6f1e-1111-4a5b-9c1d-2e3f4a5b6c7d","#,
