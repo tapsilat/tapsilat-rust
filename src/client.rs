@@ -6,8 +6,9 @@
 use crate::config::Config;
 use crate::error::{Result, TapsilatError};
 use crate::modules::{
-    InstallmentModule, MarketplaceModule, OrderModule, OrganizationModule, PaymentModule,
-    SubmerchantModule, SubscriptionModule, TokenizationModule, VposModule, WebhookModule,
+    ElementsModule, InstallmentModule, MarketplaceModule, OrderModule, OrganizationModule,
+    PaymentModule, SubmerchantModule, SubscriptionModule, TokenizationModule, VposModule,
+    WebhookModule,
 };
 use crate::types::*;
 use serde::de::DeserializeOwned;
@@ -101,6 +102,11 @@ impl TapsilatClient {
     /// Access to marketplace seller, payout and policy operations (API v2)
     pub fn marketplace(&self) -> MarketplaceModule {
         MarketplaceModule::new(Arc::new(self.clone()))
+    }
+
+    /// Access to Tapsilat Elements session operations
+    pub fn elements(&self) -> ElementsModule {
+        ElementsModule::new(Arc::new(self.clone()))
     }
 
     /// Access to webhook operations
@@ -487,6 +493,28 @@ impl TapsilatClient {
     ) -> Result<Value> {
         self.orders()
             .related_update(reference_id, related_reference_id)
+    }
+
+    // Elements Operations
+
+    /// Creates a Tapsilat Elements session; see [`ElementsModule::create_session`]. Hand the
+    /// returned `client_secret` to your app, and do not log or store it.
+    pub fn create_elements_session(
+        &self,
+        request: ElementsSessionCreateRequest,
+    ) -> Result<ElementsSessionWithSecret> {
+        self.elements().create_session(request)
+    }
+
+    /// Returns an Elements session's authoritative state; see [`ElementsModule::get_session`].
+    pub fn get_elements_session(&self, id: &str) -> Result<ElementsSession> {
+        self.elements().get_session(id)
+    }
+
+    /// Cancels an Elements session that is still waiting for a card; see
+    /// [`ElementsModule::cancel_session`].
+    pub fn cancel_elements_session(&self, id: &str) -> Result<ElementsSession> {
+        self.elements().cancel_session(id)
     }
 
     // Webhook Operations
